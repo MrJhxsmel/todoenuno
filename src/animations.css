@@ -93,3 +93,53 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ========================================================
+   REGLAS DE IMPRESIÓN OFICIAL PARA EL VOUCHER
+   ======================================================== */
+@media print {
+  /* Oculta toda la interfaz y fondo */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Muestra únicamente el contenedor del comprobante */
+  #printable-voucher,
+  #printable-voucher * {
+    visibility: visible;
+  }
+
+  #printable-voucher {
+    position: fixed;
+    left: 50%;
+    top: 20px;
+    transform: translateX(-50%);
+    width: 100% !important;
+    max-width: 380px !important;
+    box-shadow: none !important;
+    border: 1px solid #d4d4d8 !important;
+    padding: 24px !important;
+    background: #ffffff !important;
+    color: #09090b !important;
+  }
+}
+
+/* Configuraciones de tamaño de página */
+@page print-a4 {
+  size: A4 portrait;
+  margin: 1.5cm;
+}
+
+@page print-letter {
+  size: letter portrait;
+  margin: 1.5cm;
+}
+
+@page print-ticket {
+  size: 80mm auto;
+  margin: 4mm;
+}
+
+.page-a4 { page: print-a4; }
+.page-letter { page: print-letter; }
+.page-ticket { page: print-ticket; }

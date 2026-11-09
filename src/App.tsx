@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import * as htmlToImage from 'html-to-image';
 import {
   Receipt,
   DollarSign,
@@ -30,6 +31,9 @@ import {
   UserPlus,
   X,
   Scale,
+  Download,
+  ChevronDown,
+  Eye,
 } from 'lucide-react';
 
 // --- CONVERSOR DE NÚMEROS A LETRAS OFICIAL SUNAT ---
@@ -173,7 +177,7 @@ function validarRucSunat(rucStr: string): { valido: boolean; mensaje: string; ti
   return { valido: false, mensaje: `Dígito verificador final inválido (debería ser ${digitoCalculado}).`, tipo };
 }
 
-// Directorio con las 10 empresas más consultadas
+// Directorio Top 10 empresas peruanas
 const PADRON_RUC_LOCAL: Record<string, { razonSocial: string; estado: string; condicion: string; direccion: string; rubro: string }> = {
   '20131312955': {
     razonSocial: 'SUPERINTENDENCIA NACIONAL DE ADUANAS Y DE ADMINISTRACION TRIBUTARIA - SUNAT',
@@ -316,8 +320,15 @@ export default function App() {
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const [showGuide, setShowGuide] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // Estados del Voucher y Descargas
+  const voucherRef = useRef<HTMLDivElement>(null);
   const [showTicketModal, setShowTicketModal] = useState<boolean>(false);
   const [ticketData, setTicketData] = useState<{ titulo: string; filas: { label: string; valor: string }[]; total: string; letras: string } | null>(null);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [showPrintMenu, setShowPrintMenu] = useState(false);
+  const [showWspPreview, setShowWspPreview] = useState(false);
+  const [printSize, setPrintSize] = useState<'a4' | 'letter' | 'ticket'>('a4');
 
   const [showLegalModal, setShowLegalModal] = useState<boolean>(false);
   const [legalTab, setLegalTab] = useState<'terminos' | 'privacidad' | 'deslinde'>('terminos');
@@ -370,8 +381,12 @@ export default function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (showLegalModal) setShowLegalModal(false);
-        else if (showTicketModal) setShowTicketModal(false);
-        else navigateTo('home');
+        else if (showTicketModal) {
+          setShowTicketModal(false);
+          setShowDownloadMenu(false);
+          setShowPrintMenu(false);
+          setShowWspPreview(false);
+        } else navigateTo('home');
       } else if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
         e.preventDefault();
         searchInputRef.current?.focus();
@@ -394,9 +409,57 @@ export default function App() {
     setTimeout(() => setCopiedItem(null), 2000);
   };
 
-  const compartirWhatsApp = (titulo: string, texto: string) => {
-    const msg = `*Todo en Uno Perú* 🇵🇪 - ${titulo}\n\n${texto}\n\nCalculado en: todoenuno.pe`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+  // --- CONTROLADORES DE DESCARGA, IMPRESIÓN Y AIRDROP ---
+  const descargarVoucherImagen = async (formato: 'png' | 'jpeg') => {
+    if (!voucherRef.current) return;
+    setShowDownloadMenu(false);
+    try {
+      const dataUrl = formato === 'png'
+        ? await htmlToImage.toPng(voucherRef.current, { pixelRatio: 2, backgroundColor: '#ffffff' })
+        : await htmlToImage.toJpeg(voucherRef.current, { pixelRatio: 2, quality: 0.95, backgroundColor: '#ffffff' });
+
+      const link = document.createElement('a');
+      link.download = `comprobante-todoenuno.${formato}`;
+      link.href = dataUrl;
+      link.click();
+      showToast(`Comprobante descargado en .${formato.toUpperCase()}`);
+    } catch {
+      showToast('Error al generar la imagen del comprobante');
+    }
+  };
+
+  const ejecutarImpresion = (tamano: 'a4' | 'letter' | 'ticket') => {
+    setPrintSize(tamano);
+    setShowPrintMenu(false);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+  const generarTextoWhatsapp = () => {
+    if (!ticketData) return '';
+    const separador = '--------------------------------';
+    const lineas = ticketData.filas.map(f => `${f.label}: ${f.valor}`).join('\n');
+    return `*TODO EN UNO PERU*\nComprobante de Calculo Oficial\n${separador}\n*${ticketData.titulo.toUpperCase()}*\n${lineas}\n${separador}\n*TOTAL: ${ticketData.total}*\n_${ticketData.letras}_\n${separador}\nVerificado en: todoenuno.pe`;
+  };
+
+  const compartirVoucherNativo = async () => {
+    const texto = generarTextoWhatsapp();
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Comprobante - ${ticketData?.titulo || 'Todo en Uno Perú'}`,
+          text: texto,
+          url: 'https://todoenuno.pe',
+        });
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
+        }
+      }
+    } else {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
+    }
   };
 
   // --- ESTADOS SUNAT ---
@@ -740,63 +803,175 @@ export default function App() {
         </div>
       )}
 
-      {/* MODAL TIPO VOUCHER / TICKET DESCARGABLE */}
+      {/* MODAL DE VOUCHER INTERACTIVO CON DESCARGAS, HOJAS Y AIRDROP */}
       {showTicketModal && ticketData && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white text-zinc-950 w-full max-w-sm rounded-2xl shadow-2xl p-6 font-mono text-xs border border-zinc-200 relative anim-modal-in">
             <button
-              onClick={() => setShowTicketModal(false)}
+              onClick={() => {
+                setShowTicketModal(false);
+                setShowDownloadMenu(false);
+                setShowPrintMenu(false);
+                setShowWspPreview(false);
+              }}
               className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-700"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="text-center pb-4 border-b border-dashed border-zinc-300 space-y-1">
-              <span className="font-black text-sm tracking-widest uppercase">TODO EN UNO PERÚ</span>
-              <p className="text-[10px] text-zinc-500">Comprobante de Cálculo Oficial</p>
-              <p className="text-[9px] text-zinc-400">{new Date().toLocaleString('es-PE')}</p>
+            {/* ÁREA AISLADA DE IMPRESIÓN Y DESCARGA */}
+            <div
+              id="printable-voucher"
+              ref={voucherRef}
+              className={`p-2 bg-white text-zinc-950 ${
+                printSize === 'a4' ? 'page-a4' : printSize === 'letter' ? 'page-letter' : 'page-ticket'
+              }`}
+            >
+              <div className="text-center pb-4 border-b border-dashed border-zinc-300 space-y-1">
+                <span className="font-black text-sm tracking-widest uppercase">TODO EN UNO PERU</span>
+                <p className="text-[10px] text-zinc-500 font-sans">Comprobante de Calculo Oficial</p>
+                <p className="text-[9px] text-zinc-400">{new Date().toLocaleString('es-PE')}</p>
+              </div>
+
+              <div className="py-4 space-y-2 border-b border-dashed border-zinc-300">
+                <span className="font-bold text-[11px] block uppercase text-zinc-800">{ticketData.titulo}</span>
+                {ticketData.filas.map((f, i) => (
+                  <div key={i} className="flex justify-between">
+                    <span className="text-zinc-600">{f.label}:</span>
+                    <span className="font-bold">{f.valor}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="py-4 space-y-1.5 border-b border-dashed border-zinc-300 text-center">
+                <span className="text-[10px] text-zinc-500 uppercase block font-sans">IMPORTE TOTAL</span>
+                <span className="text-2xl font-black tracking-tight">{ticketData.total}</span>
+                <p className="text-[9px] text-zinc-500 uppercase leading-relaxed pt-1">{ticketData.letras}</p>
+              </div>
+
+              <div className="pt-3 text-center">
+                <p className="text-[9px] text-zinc-400 font-sans">Verificado y calculado en www.todoenuno.pe</p>
+              </div>
             </div>
 
-            <div className="py-4 space-y-2 border-b border-dashed border-zinc-300">
-              <span className="font-bold text-[11px] block uppercase text-zinc-800">{ticketData.titulo}</span>
-              {ticketData.filas.map((f, i) => (
-                <div key={i} className="flex justify-between">
-                  <span className="text-zinc-600">{f.label}:</span>
-                  <span className="font-bold">{f.valor}</span>
+            {/* BOTONERAS DE ACCIONES */}
+            <div className="pt-4 space-y-2.5">
+              <div className="grid grid-cols-2 gap-2 relative">
+                {/* Desplegable de Descarga */}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setShowDownloadMenu(!showDownloadMenu);
+                      setShowPrintMenu(false);
+                    }}
+                    className="w-full py-2 px-3 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-sans font-semibold flex items-center justify-center gap-1.5 transition-colors btn-press-effect"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Descargar <ChevronDown className="w-3 h-3 opacity-70" />
+                  </button>
+
+                  {showDownloadMenu && (
+                    <div className="absolute left-0 bottom-full mb-1 w-full bg-white border border-zinc-200 rounded-lg shadow-xl py-1 z-20 text-[11px] font-sans">
+                      <button
+                        onClick={() => descargarVoucherImagen('png')}
+                        className="w-full text-left px-3 py-1.5 hover:bg-zinc-100 flex items-center justify-between"
+                      >
+                        <span>Formato PNG</span>
+                        <span className="text-[9px] text-zinc-400">Calidad alta</span>
+                      </button>
+                      <button
+                        onClick={() => descargarVoucherImagen('jpeg')}
+                        className="w-full text-left px-3 py-1.5 hover:bg-zinc-100 flex items-center justify-between border-t border-zinc-100"
+                      >
+                        <span>Formato JPG</span>
+                        <span className="text-[9px] text-zinc-400">Comprimido</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
 
-            <div className="py-4 space-y-1.5 border-b border-dashed border-zinc-300 text-center">
-              <span className="text-[10px] text-zinc-500 uppercase block font-sans">IMPORTE TOTAL</span>
-              <span className="text-2xl font-black tracking-tight">{ticketData.total}</span>
-              <p className="text-[9px] text-zinc-500 uppercase leading-relaxed pt-1">{ticketData.letras}</p>
-            </div>
+                {/* Desplegable de Impresión */}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setShowPrintMenu(!showPrintMenu);
+                      setShowDownloadMenu(false);
+                    }}
+                    className="w-full py-2 px-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-300 rounded-lg text-xs font-sans font-semibold flex items-center justify-center gap-1.5 transition-colors btn-press-effect"
+                  >
+                    <Printer className="w-3.5 h-3.5" /> Imprimir <ChevronDown className="w-3 h-3 opacity-70" />
+                  </button>
 
-            <div className="pt-4 text-center space-y-3">
-              <p className="text-[9px] text-zinc-400">Verificado y calculado en www.todoenuno.pe</p>
+                  {showPrintMenu && (
+                    <div className="absolute right-0 bottom-full mb-1 w-44 bg-white border border-zinc-200 rounded-lg shadow-xl py-1 z-20 text-[11px] font-sans">
+                      <button
+                        onClick={() => ejecutarImpresion('a4')}
+                        className="w-full text-left px-3 py-1.5 hover:bg-zinc-100 flex items-center justify-between"
+                      >
+                        <span>Hoja A4</span>
+                        <span className="text-[9px] text-zinc-400">Estándar</span>
+                      </button>
+                      <button
+                        onClick={() => ejecutarImpresion('letter')}
+                        className="w-full text-left px-3 py-1.5 hover:bg-zinc-100 flex items-center justify-between border-t border-zinc-100"
+                      >
+                        <span>Hoja Carta</span>
+                        <span className="text-[9px] text-zinc-400">Letter</span>
+                      </button>
+                      <button
+                        onClick={() => ejecutarImpresion('ticket')}
+                        className="w-full text-left px-3 py-1.5 hover:bg-zinc-100 flex items-center justify-between border-t border-zinc-100"
+                      >
+                        <span>Ticket Térmico</span>
+                        <span className="text-[9px] text-zinc-400">80 mm</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Botón WhatsApp & AirDrop */}
               <div className="flex gap-2">
                 <button
-                  onClick={() => window.print()}
-                  className="flex-1 py-2 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-sans font-semibold flex items-center justify-center gap-1.5 transition-colors btn-press-effect"
+                  onClick={() => setShowWspPreview(!showWspPreview)}
+                  className="flex-1 py-2 px-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded-lg text-xs font-sans font-medium flex items-center justify-center gap-1.5 transition-colors btn-press-effect"
                 >
-                  <Printer className="w-3.5 h-3.5" /> Imprimir
+                  <Eye className="w-3.5 h-3.5 text-zinc-500" />
+                  <span>{showWspPreview ? 'Ocultar' : 'Ver Texto WhatsApp'}</span>
                 </button>
+
                 <button
-                  onClick={() => {
-                    compartirWhatsApp(ticketData.titulo, ticketData.filas.map(f => `${f.label}: ${f.valor}`).join('\n') + `\nTotal: ${ticketData.total}\n${ticketData.letras}`);
-                  }}
-                  className="py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-sans font-semibold flex items-center justify-center gap-1.5 transition-colors btn-press-effect"
+                  onClick={compartirVoucherNativo}
+                  className="py-2 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-sans font-semibold flex items-center justify-center gap-1.5 transition-colors btn-press-effect"
+                  title="Compartir vía WhatsApp o AirDrop"
                 >
                   <Share2 className="w-3.5 h-3.5" />
+                  <span>Enviar / AirDrop</span>
                 </button>
               </div>
+
+              {/* Vista previa sin caracteres extraños */}
+              {showWspPreview && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 text-[10px] font-sans">
+                  <div className="flex items-center justify-between text-emerald-800 font-bold border-b border-emerald-200 pb-1">
+                    <span>Mensaje compatible con WhatsApp:</span>
+                    <button
+                      onClick={() => copyToClipboard(generarTextoWhatsapp(), 'c_wsp_txt', 'Texto de WhatsApp copiado')}
+                      className="text-emerald-700 hover:underline"
+                    >
+                      Copiar texto
+                    </button>
+                  </div>
+                  <pre className="whitespace-pre-wrap font-mono text-[10px] text-zinc-700 max-h-32 overflow-y-auto bg-white p-2 rounded border border-emerald-100">
+                    {generarTextoWhatsapp()}
+                  </pre>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* HEADER ÚNICO */}
+      {/* HEADER ÚNICO FIJO */}
       <header className={`border-b ${borderHeader} backdrop-blur sticky top-0 z-40`}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
           {/* ISOLOGO OFICIAL */}
@@ -807,7 +982,6 @@ export default function App() {
             }}
             className="flex items-center gap-3 cursor-pointer group flex-shrink-0"
           >
-            {/* Isotipo T1 */}
             <div className="relative w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-700/80 flex items-center justify-center group-hover:scale-105 transition-all shadow-sm">
               <span className="font-mono font-black text-white text-base tracking-tighter">
                 T<span className="text-zinc-300">1</span>
@@ -815,7 +989,6 @@ export default function App() {
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-600 ring-2 ring-zinc-950"></span>
             </div>
 
-            {/* Texto de Marca y Tag PE */}
             <div>
               <div className="flex items-center gap-1.5">
                 <span className={`font-extrabold text-sm tracking-tight ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
@@ -899,7 +1072,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* CONTENIDO PRINCIPAL CON ANIMACIÓN SUAVE POR PÁGINA */}
+      {/* CONTENIDO PRINCIPAL */}
       <main key={activeModule} className="flex-1 max-w-6xl w-full mx-auto px-4 py-8 anim-fade-in-up">
         {activeModule === 'home' ? (
           <div className="space-y-8">
@@ -2051,7 +2224,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* FICHA RUC CON ALTO CONTRASTE */}
+              {/* FICHA RUC */}
               <div className={`lg:col-span-7 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard}`}>
                 <div className="space-y-3">
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Ficha del Contribuyente</span>
@@ -2134,7 +2307,7 @@ export default function App() {
           🔒 <strong>Privacidad Garantizada:</strong> Todos los cálculos se procesan de forma 100% local en tu navegador. Tus montos, sueldos y facturas nunca se envían ni almacenan en servidores externos.
         </p>
         
-        {/* Enlaces a Políticas y Términos */}
+        {/* Enlaces Legales */}
         <div className="flex justify-center items-center gap-4 text-[11px] pt-1">
           <button
             onClick={() => { setLegalTab('terminos'); setShowLegalModal(true); }}
@@ -2159,13 +2332,12 @@ export default function App() {
         </div>
       </footer>
 
-      {/* MODAL DE TÉRMINOS, PRIVACIDAD Y CONDICIONES */}
+      {/* MODAL LEGAL */}
       {showLegalModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-2xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col border overflow-hidden anim-modal-in ${
             isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-200' : 'bg-white border-slate-200 text-slate-800'
           }`}>
-            {/* Cabecera del Modal */}
             <div className={`p-4 border-b flex items-center justify-between ${
               isDark ? 'border-zinc-800 bg-zinc-950/60' : 'border-slate-200 bg-slate-50'
             }`}>
@@ -2185,7 +2357,6 @@ export default function App() {
               </button>
             </div>
 
-            {/* Selector de Pestaña Legal */}
             <div className={`flex border-b text-xs font-medium px-4 gap-2 ${
               isDark ? 'border-zinc-800 bg-zinc-950/40' : 'border-slate-200 bg-slate-100'
             }`}>
@@ -2210,7 +2381,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* Contenido con scroll */}
             <div className="p-6 overflow-y-auto text-xs leading-relaxed space-y-5">
               {legalTab === 'terminos' && (
                 <div className="space-y-3">
@@ -2288,7 +2458,6 @@ export default function App() {
               )}
             </div>
 
-            {/* Pie del modal */}
             <div className={`p-4 border-t flex justify-end ${
               isDark ? 'border-zinc-800 bg-zinc-950/60' : 'border-slate-200 bg-slate-50'
             }`}>
