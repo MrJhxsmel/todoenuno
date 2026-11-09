@@ -2146,75 +2146,79 @@ export default function App() {
         </div>
       </footer>
       {/* MODAL DE TÉRMINOS, PRIVACIDAD Y CONDICIONES */}
+{/* MODAL DE TÉRMINOS, PRIVACIDAD Y CONDICIONES (CONTRASTE OPTIMIZADO) */}
       {showLegalModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-2xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col border overflow-hidden ${
             isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-200' : 'bg-white border-slate-200 text-slate-800'
           }`}>
             {/* Cabecera del Modal */}
-            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-zinc-800 bg-zinc-950/60' : 'border-slate-200 bg-slate-50'}`}>
+            <div className={`p-4 border-b flex items-center justify-between ${
+              isDark ? 'border-zinc-800 bg-zinc-950/60' : 'border-slate-200 bg-slate-50'
+            }`}>
               <div className="flex items-center gap-2">
-                <Scale className="w-4 h-4 text-zinc-400" />
-                <span className="font-semibold text-sm">Información Legal & Políticas</span>
+                <Scale className={`w-4 h-4 ${isDark ? 'text-zinc-400' : 'text-slate-600'}`} />
+                <span className={`font-semibold text-sm ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
+                  Información Legal & Políticas
+                </span>
               </div>
               <button
                 onClick={() => setShowLegalModal(false)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-white transition-colors"
+                className={`p-1 rounded-lg transition-colors ${
+                  isDark ? 'text-zinc-400 hover:text-white hover:bg-zinc-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200'
+                }`}
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Selector de Pestaña Legal */}
-            <div className={`flex border-b text-xs font-medium px-4 ${isDark ? 'border-zinc-800 bg-zinc-900' : 'border-slate-200 bg-slate-100'}`}>
-              <button
-                onClick={() => setLegalTab('terminos')}
-                className={`py-3 px-3 border-b-2 transition-colors ${
-                  legalTab === 'terminos'
-                    ? 'border-white font-semibold text-white'
-                    : 'border-transparent text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                Términos de Uso
-              </button>
-              <button
-                onClick={() => setLegalTab('privacidad')}
-                className={`py-3 px-3 border-b-2 transition-colors ${
-                  legalTab === 'privacidad'
-                    ? 'border-white font-semibold text-white'
-                    : 'border-transparent text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                Política de Privacidad
-              </button>
-              <button
-                onClick={() => setLegalTab('deslinde')}
-                className={`py-3 px-3 border-b-2 transition-colors ${
-                  legalTab === 'deslinde'
-                    ? 'border-white font-semibold text-white'
-                    : 'border-transparent text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                Aviso Tributario
-              </button>
+            <div className={`flex border-b text-xs font-medium px-4 gap-2 ${
+              isDark ? 'border-zinc-800 bg-zinc-950/40' : 'border-slate-200 bg-slate-100'
+            }`}>
+              {(['terminos', 'privacidad', 'deslinde'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setLegalTab(tab)}
+                  className={`py-3 px-3 border-b-2 font-semibold transition-colors ${
+                    legalTab === tab
+                      ? isDark
+                        ? 'border-zinc-100 text-zinc-100'
+                        : 'border-slate-900 text-slate-900'
+                      : isDark
+                        ? 'border-transparent text-zinc-400 hover:text-zinc-200'
+                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {tab === 'terminos' && 'Términos de Uso'}
+                  {tab === 'privacidad' && 'Política de Privacidad'}
+                  {tab === 'deslinde' && 'Aviso Tributario'}
+                </button>
+              ))}
             </div>
 
             {/* Contenido con scroll */}
-            <div className="p-6 overflow-y-auto text-xs leading-relaxed space-y-4">
+            <div className="p-6 overflow-y-auto text-xs leading-relaxed space-y-5">
               {legalTab === 'terminos' && (
                 <div className="space-y-3">
-                  <h3 className="font-bold text-sm text-zinc-100">1. Aceptación de los Términos</h3>
-                  <p className="opacity-80">
+                  <h3 className={`font-bold text-sm ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
+                    1. Aceptación de los Términos
+                  </h3>
+                  <p className={isDark ? 'text-zinc-300' : 'text-slate-600'}>
                     Al acceder y utilizar <strong>Todo en Uno Perú</strong>, el usuario acepta de forma plena y sin reservas los presentes Términos y Condiciones. Si no está de acuerdo con alguno de ellos, le solicitamos abstenerse de usar la plataforma.
                   </p>
 
-                  <h3 className="font-bold text-sm text-zinc-100">2. Naturaleza del Servicio</h3>
-                  <p className="opacity-80">
+                  <h3 className={`font-bold text-sm ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
+                    2. Naturaleza del Servicio
+                  </h3>
+                  <p className={isDark ? 'text-zinc-300' : 'text-slate-600'}>
                     La plataforma proporciona calculadoras, estimaciones y validaciones matemáticas basadas en la legislación tributaria y laboral peruana vigente. El servicio se ofrece de forma libre y gratuita para propósitos informativos, de referencia rápida y formativos.
                   </p>
 
-                  <h3 className="font-bold text-sm text-zinc-100">3. Propiedad Intelectual</h3>
-                  <p className="opacity-80">
+                  <h3 className={`font-bold text-sm ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
+                    3. Propiedad Intelectual
+                  </h3>
+                  <p className={isDark ? 'text-zinc-300' : 'text-slate-600'}>
                     El diseño de la interfaz, logotipos, código fuente y arquitectura visual pertenecen a Todo en Uno Perú. Queda permitida la impresión y difusión de comprobantes y cálculos individuales con mención del origen.
                   </p>
                 </div>
@@ -2222,18 +2226,24 @@ export default function App() {
 
               {legalTab === 'privacidad' && (
                 <div className="space-y-3">
-                  <h3 className="font-bold text-sm text-zinc-100">1. Tratamiento Local de la Información</h3>
-                  <p className="opacity-80">
+                  <h3 className={`font-bold text-sm ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
+                    1. Tratamiento Local de la Información
+                  </h3>
+                  <p className={isDark ? 'text-zinc-300' : 'text-slate-600'}>
                     En cumplimiento con la <strong>Ley N° 29733 (Ley de Protección de Datos Personales del Perú)</strong>, le informamos que todos los montos de facturación, remuneraciones, números de RUC o deudas tributarias ingresados se procesan <strong>estrictamente en el navegador del usuario</strong>.
                   </p>
 
-                  <h3 className="font-bold text-sm text-zinc-100">2. No Recopilación en Servidores</h3>
-                  <p className="opacity-80">
+                  <h3 className={`font-bold text-sm ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
+                    2. No Recopilación en Servidores
+                  </h3>
+                  <p className={isDark ? 'text-zinc-300' : 'text-slate-600'}>
                     No contamos con bases de datos ni almacenamos en servidores sus importes monetarios ni su identidad. El historial de cálculos se almacena temporalmente en el almacenamiento local (<em>localStorage</em>) de su propio dispositivo y puede eliminarse en cualquier momento mediante el botón "Limpiar historial".
                   </p>
 
-                  <h3 className="font-bold text-sm text-zinc-100">3. Enlaces a Sitios Externos</h3>
-                  <p className="opacity-80">
+                  <h3 className={`font-bold text-sm ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
+                    3. Enlaces a Sitios Externos
+                  </h3>
+                  <p className={isDark ? 'text-zinc-300' : 'text-slate-600'}>
                     Nuestra web incluye enlaces directos y de cortesía a portales gubernamentales (como SUNAT o Banco de la Nación). No nos hacemos responsables de las políticas de privacidad o funcionamiento de dichos dominios externos.
                   </p>
                 </div>
@@ -2241,18 +2251,24 @@ export default function App() {
 
               {legalTab === 'deslinde' && (
                 <div className="space-y-3">
-                  <h3 className="font-bold text-sm text-zinc-100">1. Carácter Informativo y No Asesoramiento Legal</h3>
-                  <p className="opacity-80">
+                  <h3 className={`font-bold text-sm ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
+                    1. Carácter Informativo y No Asesoramiento Legal
+                  </h3>
+                  <p className={isDark ? 'text-zinc-300' : 'text-slate-600'}>
                     Los resultados arrojados por las calculadoras de IGV, Detracciones SPOT, Retenciones, Alcabala, CTS, Gratificaciones y TIM son estimaciones matemáticas elaboradas conforme a las tasas oficiales del ordenamiento jurídico peruano. <strong>No constituyen asesoría contable, legal ni tributaria formal vinculante.</strong>
                   </p>
 
-                  <h3 className="font-bold text-sm text-zinc-100">2. Validación con Entidades Oficiales</h3>
-                  <p className="opacity-80">
+                  <h3 className={`font-bold text-sm ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
+                    2. Validación con Entidades Oficiales
+                  </h3>
+                  <p className={isDark ? 'text-zinc-300' : 'text-slate-600'}>
                     Es responsabilidad exclusiva de cada usuario o contribuyente corroborar los montos definitivos en los portales oficiales correspondientes (SUNAT Operaciones en Línea SOL, SAT, SBS o mediante un Contador Público Colegiado) antes de efectuar declaraciones juradas o pagos vinculantes.
                   </p>
 
-                  <h3 className="font-bold text-sm text-zinc-100">3. Limitación de Responsabilidad</h3>
-                  <p className="opacity-80">
+                  <h3 className={`font-bold text-sm ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
+                    3. Limitación de Responsabilidad
+                  </h3>
+                  <p className={isDark ? 'text-zinc-300' : 'text-slate-600'}>
                     Todo en Uno Perú no asume responsabilidad civil, fiscal ni comercial por multas, recargos, intereses o discrepancias que surjan por el uso de las cifras resultantes de esta herramienta.
                   </p>
                 </div>
@@ -2260,10 +2276,14 @@ export default function App() {
             </div>
 
             {/* Pie del modal */}
-            <div className={`p-4 border-t flex justify-end ${isDark ? 'border-zinc-800 bg-zinc-950/60' : 'border-slate-200 bg-slate-50'}`}>
+            <div className={`p-4 border-t flex justify-end ${
+              isDark ? 'border-zinc-800 bg-zinc-950/60' : 'border-slate-200 bg-slate-50'
+            }`}>
               <button
                 onClick={() => setShowLegalModal(false)}
-                className="px-4 py-2 bg-zinc-100 text-zinc-950 font-semibold rounded-lg text-xs hover:bg-zinc-200 transition-colors"
+                className={`px-4 py-2 font-semibold rounded-lg text-xs transition-colors ${
+                  isDark ? 'bg-zinc-100 text-zinc-950 hover:bg-zinc-200' : 'bg-slate-900 text-white hover:bg-slate-800'
+                }`}
               >
                 Entendido y de acuerdo
               </button>
