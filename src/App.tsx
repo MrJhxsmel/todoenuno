@@ -33,6 +33,7 @@ import {
   Scale,
 } from 'lucide-react';
 
+
 // --- CONVERSOR DE NÚMEROS A LETRAS OFICIAL SUNAT ---
 function Unidades(num: number): string {
   switch (num) {
@@ -401,6 +402,8 @@ export default function App() {
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
+  
+
   // --- ESTADOS SUNAT ---
   const [sunatSubTab, setSunatSubTab] = useState<'igv' | 'spot' | 'retencion' | 'cuarta'>('igv');
   const [subtotalInput, setSubtotalInput] = useState<string>('1000');
@@ -499,6 +502,7 @@ export default function App() {
   const totalNum = parseFloat(totalInput) || 0;
   const igvCalculado = totalNum - subtotalNum;
   const totalEnLetras = numeroALetras(totalNum);
+
 
   // SPOT Detracciones
   const numSpot = parseFloat(spotTotal) || 0;
@@ -741,6 +745,41 @@ export default function App() {
           <span>{toastMsg}</span>
         </div>
       )}
+
+      {/* ISOLOGO OFICIAL */}
+          <div
+            onClick={() => {
+              navigateTo('home');
+              setShowGuide(false);
+            }}
+            className="flex items-center gap-3 cursor-pointer group flex-shrink-0"
+          >
+            {/* Isotipo T1 */}
+            <div className="relative w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-700/80 flex items-center justify-center group-hover:scale-105 transition-all shadow-sm">
+              <span className="font-mono font-black text-white text-base tracking-tighter">
+                T<span className="text-zinc-300">1</span>
+              </span>
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-600 ring-2 ring-zinc-950"></span>
+            </div>
+
+            {/* Texto y Tag PE */}
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-sm tracking-tight">Todo en Uno</span>
+                <span className={`text-[10px] font-mono font-bold tracking-wider px-1.5 py-0.5 rounded border flex items-center gap-1 ${
+                  isDark
+                    ? 'bg-zinc-900 text-zinc-300 border-zinc-700'
+                    : 'bg-slate-100 text-slate-800 border-slate-300'
+                }`}>
+                  PE
+                  <span className="w-1 h-2 rounded-sm bg-red-600"></span>
+                </span>
+              </div>
+              <p className={`text-[10px] uppercase tracking-wider font-medium ${isDark ? 'text-zinc-400' : 'text-slate-500'} hidden sm:block`}>
+                Herramientas &amp; Finanzas
+              </p>
+            </div>
+          </div>
 
       {/* MODAL TIPO VOUCHER / TICKET DESCARGABLE */}
       {showTicketModal && ticketData && (
