@@ -8,7 +8,6 @@ import {
   Check,
   ChevronRight,
   ArrowLeft,
-  FileText,
   Calculator,
   HelpCircle,
   ShieldCheck,
@@ -32,7 +31,6 @@ import {
   X,
   Scale,
 } from 'lucide-react';
-
 
 // --- CONVERSOR DE NÚMEROS A LETRAS OFICIAL SUNAT ---
 function Unidades(num: number): string {
@@ -175,7 +173,7 @@ function validarRucSunat(rucStr: string): { valido: boolean; mensaje: string; ti
   return { valido: false, mensaje: `Dígito verificador final inválido (debería ser ${digitoCalculado}).`, tipo };
 }
 
-// Directorio con las 10 empresas más buscadas
+// Directorio con las 10 empresas más consultadas
 const PADRON_RUC_LOCAL: Record<string, { razonSocial: string; estado: string; condicion: string; direccion: string; rubro: string }> = {
   '20131312955': {
     razonSocial: 'SUPERINTENDENCIA NACIONAL DE ADUANAS Y DE ADMINISTRACION TRIBUTARIA - SUNAT',
@@ -368,7 +366,6 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Atajos: Esc para cerrar/inicio, / para buscar
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -401,8 +398,6 @@ export default function App() {
     const msg = `*Todo en Uno Perú* 🇵🇪 - ${titulo}\n\n${texto}\n\nCalculado en: todoenuno.pe`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
   };
-
-  
 
   // --- ESTADOS SUNAT ---
   const [sunatSubTab, setSunatSubTab] = useState<'igv' | 'spot' | 'retencion' | 'cuarta'>('igv');
@@ -503,7 +498,6 @@ export default function App() {
   const igvCalculado = totalNum - subtotalNum;
   const totalEnLetras = numeroALetras(totalNum);
 
-
   // SPOT Detracciones
   const numSpot = parseFloat(spotTotal) || 0;
   const currentSpotItem = DETRACCION_CATALOG.find((s) => s.id === selectedSpotId) || DETRACCION_CATALOG[0];
@@ -546,7 +540,7 @@ export default function App() {
   const ahorroEstimadoBcp =
     tipoOperacion === 'vender' ? Math.max(0, numPen - valorBcp) : Math.max(0, valorBcp - numPen);
 
-  // Cálculos Laborales (Grati & CTS)
+  // Cálculos Laborales
   const numSueldo = parseFloat(sueldoBasico) || 0;
   const baseComputable = numSueldo + (tieneAsigFamiliar ? 102.5 : 0);
   const gratiProporcional = (baseComputable / 6) * Math.min(6, Math.max(1, mesesTrabajados));
@@ -570,7 +564,7 @@ export default function App() {
       : 0;
   const totalLiquidacion = gratiTrunca + ctsTrunca + vacTrunca + indemnizacionDespido;
 
-  // Sueldo Neto & 5ta
+  // Sueldo Neto
   const numBruto = parseFloat(sueldoBruto) || 0;
   let tasaPension = 0.13;
   if (regimenPension !== 'onp') {
@@ -746,41 +740,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ISOLOGO OFICIAL */}
-          <div
-            onClick={() => {
-              navigateTo('home');
-              setShowGuide(false);
-            }}
-            className="flex items-center gap-3 cursor-pointer group flex-shrink-0"
-          >
-            {/* Isotipo T1 */}
-            <div className="relative w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-700/80 flex items-center justify-center group-hover:scale-105 transition-all shadow-sm">
-              <span className="font-mono font-black text-white text-base tracking-tighter">
-                T<span className="text-zinc-300">1</span>
-              </span>
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-600 ring-2 ring-zinc-950"></span>
-            </div>
-
-            {/* Texto y Tag PE */}
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-sm tracking-tight">Todo en Uno</span>
-                <span className={`text-[10px] font-mono font-bold tracking-wider px-1.5 py-0.5 rounded border flex items-center gap-1 ${
-                  isDark
-                    ? 'bg-zinc-900 text-zinc-300 border-zinc-700'
-                    : 'bg-slate-100 text-slate-800 border-slate-300'
-                }`}>
-                  PE
-                  <span className="w-1 h-2 rounded-sm bg-red-600"></span>
-                </span>
-              </div>
-              <p className={`text-[10px] uppercase tracking-wider font-medium ${isDark ? 'text-zinc-400' : 'text-slate-500'} hidden sm:block`}>
-                Herramientas &amp; Finanzas
-              </p>
-            </div>
-          </div>
-
       {/* MODAL TIPO VOUCHER / TICKET DESCARGABLE */}
       {showTicketModal && ticketData && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -836,11 +795,11 @@ export default function App() {
           </div>
         </div>
       )}
-      
-      {/* HEADER */}
+
+      {/* HEADER ÚNICO */}
       <header className={`border-b ${borderHeader} backdrop-blur sticky top-0 z-40`}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          {/* ISOLOGO OFICIAL ÚNICO */}
+          {/* ISOLOGO OFICIAL */}
           <div
             onClick={() => {
               navigateTo('home');
@@ -848,7 +807,7 @@ export default function App() {
             }}
             className="flex items-center gap-3 cursor-pointer group flex-shrink-0"
           >
-            {/* Isotipo T1 con punto rojo Perú */}
+            {/* Isotipo T1 */}
             <div className="relative w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-700/80 flex items-center justify-center group-hover:scale-105 transition-all shadow-sm">
               <span className="font-mono font-black text-white text-base tracking-tighter">
                 T<span className="text-zinc-300">1</span>
@@ -2200,7 +2159,7 @@ export default function App() {
         </div>
       </footer>
 
-      {/* MODAL DE TÉRMINOS, PRIVACIDAD Y CONDICIONES (CONTRASTE OPTIMIZADO Y ANIMADO) */}
+      {/* MODAL DE TÉRMINOS, PRIVACIDAD Y CONDICIONES */}
       {showLegalModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-2xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col border overflow-hidden anim-modal-in ${
