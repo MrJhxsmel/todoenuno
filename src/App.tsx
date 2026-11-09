@@ -30,9 +30,7 @@ import {
   CalendarDays,
   UserPlus,
   X,
-  Download,
   Scale,
-  Shield,
 } from 'lucide-react';
 
 // --- CONVERSOR DE NÚMEROS A LETRAS OFICIAL SUNAT ---
@@ -260,7 +258,6 @@ const DETRACCION_CATALOG = [
   { id: '15_madera', name: 'Madera y derivados', rate: 0.15, minAmount: 700 },
 ];
 
-// Matriz de Cronograma SUNAT por último dígito de RUC
 const CRONOGRAMA_SUNAT: Record<string, { periodo: string; vencimiento: string }[]> = {
   '0': [
     { periodo: 'Enero', vencimiento: '14 Feb' },
@@ -292,7 +289,6 @@ const CRONOGRAMA_SUNAT: Record<string, { periodo: string; vencimiento: string }[
   ],
 };
 
-// Generador genérico para dígitos 2 al 9 y Buenos Contribuyentes
 for (let d = 2; d <= 9; d++) {
   CRONOGRAMA_SUNAT[String(d)] = CRONOGRAMA_SUNAT['0'].map((item) => ({
     periodo: item.periodo,
@@ -313,9 +309,6 @@ export default function App() {
     return 'home';
   };
 
-  const [showLegalModal, setShowLegalModal] = useState<boolean>(false);
-  const [legalTab, setLegalTab] = useState<'terminos' | 'privacidad' | 'deslinde'>('terminos');
-
   const [activeModule, setActiveModule] = useState<'home' | 'sunat' | 'cambio' | 'laboral' | 'liquidacion' | 'sueldo' | 'tim' | 'ruc' | 'alcabala' | 'prestamo' | 'cronograma' | 'costo_empleador'>(getInitialModule);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('todoenuno_theme') as 'dark' | 'light') || 'dark';
@@ -326,6 +319,9 @@ export default function App() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [showTicketModal, setShowTicketModal] = useState<boolean>(false);
   const [ticketData, setTicketData] = useState<{ titulo: string; filas: { label: string; valor: string }[]; total: string; letras: string } | null>(null);
+
+  const [showLegalModal, setShowLegalModal] = useState<boolean>(false);
+  const [legalTab, setLegalTab] = useState<'terminos' | 'privacidad' | 'deslinde'>('terminos');
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -371,11 +367,12 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Atajos de teclado: Esc para volver, / para buscar
+  // Atajos: Esc para cerrar/inicio, / para buscar
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (showTicketModal) setShowTicketModal(false);
+        if (showLegalModal) setShowLegalModal(false);
+        else if (showTicketModal) setShowTicketModal(false);
         else navigateTo('home');
       } else if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
         e.preventDefault();
@@ -384,7 +381,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showTicketModal]);
+  }, [showTicketModal, showLegalModal]);
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
@@ -414,7 +411,7 @@ export default function App() {
   const [cuartaTotal, setCuartaTotal] = useState<string>('2500');
   const [tieneSuspension, setTieneSuspension] = useState<boolean>(false);
 
-  // --- ESTADOS TIPO DE CAMBIO (Rango real S/ 3.40 - S/ 3.50) ---
+  // --- ESTADOS TIPO DE CAMBIO ---
   const [fuenteTc, setFuenteTc] = useState<'sunat' | 'paralelo'>('sunat');
   const [tipoOperacion, setTipoOperacion] = useState<'vender' | 'comprar'>('vender');
   const [usdVal, setUsdVal] = useState<string>('1000');
@@ -464,7 +461,7 @@ export default function App() {
   // --- ESTADOS CRONOGRAMA SUNAT ---
   const [digitoRucCronograma, setDigitoRucCronograma] = useState<string>('0');
 
-  // --- ESTADOS COSTO LABORAL EMPLEADOR (PYMES) ---
+  // --- ESTADOS COSTO LABORAL EMPLEADOR ---
   const [sueldoEmpleador, setSueldoEmpleador] = useState<string>('2000');
   const [regimenEmpresa, setRegimenEmpresa] = useState<'micro' | 'pequena' | 'general'>('micro');
 
@@ -739,7 +736,7 @@ export default function App() {
     <div className={`min-h-screen ${bgMain} flex flex-col font-sans transition-colors duration-200`}>
       {/* Toast Flotante */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-zinc-900 text-white border border-zinc-700 px-4 py-2.5 rounded-xl shadow-2xl text-xs flex items-center gap-2 animate-bounce">
+        <div className="fixed bottom-6 right-6 z-50 bg-zinc-900 text-white border border-zinc-700 px-4 py-2.5 rounded-xl shadow-2xl text-xs flex items-center gap-2 anim-toast">
           <Check className="w-4 h-4 text-emerald-400" />
           <span>{toastMsg}</span>
         </div>
@@ -748,7 +745,7 @@ export default function App() {
       {/* MODAL TIPO VOUCHER / TICKET DESCARGABLE */}
       {showTicketModal && ticketData && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white text-zinc-950 w-full max-w-sm rounded-2xl shadow-2xl p-6 font-mono text-xs border border-zinc-200 relative animate-scaleIn">
+          <div className="bg-white text-zinc-950 w-full max-w-sm rounded-2xl shadow-2xl p-6 font-mono text-xs border border-zinc-200 relative anim-modal-in">
             <button
               onClick={() => setShowTicketModal(false)}
               className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-700"
@@ -783,7 +780,7 @@ export default function App() {
               <div className="flex gap-2">
                 <button
                   onClick={() => window.print()}
-                  className="flex-1 py-2 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-sans font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                  className="flex-1 py-2 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-sans font-semibold flex items-center justify-center gap-1.5 transition-colors btn-press-effect"
                 >
                   <Printer className="w-3.5 h-3.5" /> Imprimir
                 </button>
@@ -791,7 +788,7 @@ export default function App() {
                   onClick={() => {
                     compartirWhatsApp(ticketData.titulo, ticketData.filas.map(f => `${f.label}: ${f.valor}`).join('\n') + `\nTotal: ${ticketData.total}\n${ticketData.letras}`);
                   }}
-                  className="py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-sans font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                  className="py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-sans font-semibold flex items-center justify-center gap-1.5 transition-colors btn-press-effect"
                 >
                   <Share2 className="w-3.5 h-3.5" />
                 </button>
@@ -849,7 +846,7 @@ export default function App() {
               <>
                 <button
                   onClick={() => setShowGuide(!showGuide)}
-                  className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border transition-colors ${
+                  className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border transition-colors btn-press-effect ${
                     showGuide
                       ? isDark ? 'bg-zinc-200 text-zinc-950 font-semibold' : 'bg-slate-900 text-white font-semibold'
                       : isDark ? 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-300' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
@@ -863,7 +860,7 @@ export default function App() {
                     navigateTo('home');
                     setShowGuide(false);
                   }}
-                  className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border transition-colors ${
+                  className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border transition-colors btn-press-effect ${
                     isDark ? 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-400 hover:text-zinc-200' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-600'
                   }`}
                 >
@@ -876,7 +873,7 @@ export default function App() {
             <button
               onClick={toggleTheme}
               aria-label="Cambiar tema"
-              className={`p-2 rounded-lg border transition-colors ${
+              className={`p-2 rounded-lg border transition-colors btn-press-effect ${
                 isDark ? 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-300' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
               }`}
             >
@@ -886,8 +883,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* CONTENIDO PRINCIPAL */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+      {/* CONTENIDO PRINCIPAL CON ANIMACIÓN SUAVE POR PÁGINA */}
+      <main key={activeModule} className="flex-1 max-w-6xl w-full mx-auto px-4 py-8 anim-fade-in-up">
         {activeModule === 'home' ? (
           <div className="space-y-8">
             <div className="max-w-xl mx-auto text-center pt-2 pb-1">
@@ -916,7 +913,7 @@ export default function App() {
                   <div
                     key={item.id}
                     onClick={() => navigateTo(item.id as any)}
-                    className={`group rounded-xl p-5 border transition-all cursor-pointer flex flex-col justify-between ${bgCard} hover:border-zinc-500`}
+                    className={`group rounded-xl p-5 border transition-all cursor-pointer flex flex-col justify-between ${bgCard} hover:border-zinc-500 card-hover-effect`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-3">
@@ -955,7 +952,7 @@ export default function App() {
                     <History className="w-4 h-4 text-zinc-400" />
                     <span className="text-xs font-semibold">Cálculos Recientes en esta sesión</span>
                   </div>
-                  <button onClick={clearHistory} className="text-[11px] text-zinc-500 hover:text-rose-400 flex items-center gap-1">
+                  <button onClick={clearHistory} className="text-[11px] text-zinc-500 hover:text-rose-400 flex items-center gap-1 btn-press-effect">
                     <Trash2 className="w-3 h-3" /> Limpiar historial
                   </button>
                 </div>
@@ -974,7 +971,7 @@ export default function App() {
             )}
           </div>
         ) : activeModule === 'cronograma' ? (
-          /* ================= MÓDULO NUEVO: CRONOGRAMA SUNAT CON GOOGLE CALENDAR ================= */
+          /* ================= MÓDULO: CRONOGRAMA SUNAT ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -993,7 +990,7 @@ export default function App() {
                   <button
                     key={dig}
                     onClick={() => setDigitoRucCronograma(dig)}
-                    className={`px-3.5 py-2 rounded-lg text-xs font-mono font-bold border transition-colors ${
+                    className={`px-3.5 py-2 rounded-lg text-xs font-mono font-bold border transition-colors btn-press-effect ${
                       digitoRucCronograma === dig
                         ? isDark ? 'bg-zinc-100 text-zinc-950 border-white' : 'bg-slate-900 text-white border-slate-900'
                         : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-600' : 'bg-white border-slate-300 text-slate-700'
@@ -1007,14 +1004,14 @@ export default function App() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {(CRONOGRAMA_SUNAT[digitoRucCronograma] || CRONOGRAMA_SUNAT['0']).map((item, idx) => (
-                <div key={idx} className={`p-4 rounded-xl border flex flex-col justify-between ${bgCard}`}>
+                <div key={idx} className={`p-4 rounded-xl border flex flex-col justify-between ${bgCard} card-hover-effect`}>
                   <div>
                     <span className="text-[11px] text-zinc-500 uppercase tracking-wider block font-semibold">Periodo: {item.periodo}</span>
                     <span className="text-xl font-bold font-mono tracking-tight block mt-1">{item.vencimiento}</span>
                   </div>
                   <button
                     onClick={() => abrirGoogleCalendar(item.periodo, item.vencimiento)}
-                    className="mt-3 py-1.5 px-2.5 rounded-lg text-[11px] font-medium border flex items-center justify-center gap-1.5 hover:bg-zinc-800/40 transition-colors"
+                    className="mt-3 py-1.5 px-2.5 rounded-lg text-[11px] font-medium border flex items-center justify-center gap-1.5 hover:bg-zinc-800/40 transition-colors btn-press-effect"
                   >
                     <Calendar className="w-3.5 h-3.5 text-blue-500" />
                     <span>Alerta en Google Calendar</span>
@@ -1024,7 +1021,7 @@ export default function App() {
             </div>
           </div>
         ) : activeModule === 'costo_empleador' ? (
-          /* ================= MÓDULO NUEVO: COSTO LABORAL EMPLEADOR (PYMES) ================= */
+          /* ================= MÓDULO: COSTO LABORAL EMPLEADOR ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1057,7 +1054,7 @@ export default function App() {
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={() => setRegimenEmpresa('micro')}
-                      className={`p-2.5 rounded-lg text-xs font-medium border text-center transition-colors ${
+                      className={`p-2.5 rounded-lg text-xs font-medium border text-center transition-colors btn-press-effect ${
                         regimenEmpresa === 'micro' ? isDark ? 'bg-zinc-100 text-zinc-950 font-bold' : 'bg-slate-900 text-white font-bold' : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-white border-slate-200'
                       }`}
                     >
@@ -1065,7 +1062,7 @@ export default function App() {
                     </button>
                     <button
                       onClick={() => setRegimenEmpresa('pequena')}
-                      className={`p-2.5 rounded-lg text-xs font-medium border text-center transition-colors ${
+                      className={`p-2.5 rounded-lg text-xs font-medium border text-center transition-colors btn-press-effect ${
                         regimenEmpresa === 'pequena' ? isDark ? 'bg-zinc-100 text-zinc-950 font-bold' : 'bg-slate-900 text-white font-bold' : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-white border-slate-200'
                       }`}
                     >
@@ -1073,7 +1070,7 @@ export default function App() {
                     </button>
                     <button
                       onClick={() => setRegimenEmpresa('general')}
-                      className={`p-2.5 rounded-lg text-xs font-medium border text-center transition-colors ${
+                      className={`p-2.5 rounded-lg text-xs font-medium border text-center transition-colors btn-press-effect ${
                         regimenEmpresa === 'general' ? isDark ? 'bg-zinc-100 text-zinc-950 font-bold' : 'bg-slate-900 text-white font-bold' : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-white border-slate-200'
                       }`}
                     >
@@ -1138,7 +1135,7 @@ export default function App() {
                           numeroALetras(costoTotalMensual)
                         )
                       }
-                      className="p-2 rounded-md bg-zinc-800 text-zinc-300 hover:text-white flex items-center gap-1.5 text-xs"
+                      className="p-2 rounded-md bg-zinc-800 text-zinc-300 hover:text-white flex items-center gap-1.5 text-xs btn-press-effect"
                     >
                       <Printer className="w-3.5 h-3.5" /> Voucher
                     </button>
@@ -1164,7 +1161,7 @@ export default function App() {
                   <button
                     key={tab}
                     onClick={() => setSunatSubTab(tab)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors btn-press-effect ${
                       sunatSubTab === tab
                         ? isDark ? 'bg-zinc-100 text-zinc-950 font-semibold' : 'bg-white text-slate-900 font-semibold shadow-sm'
                         : isDark ? 'text-zinc-400 hover:text-zinc-200' : 'text-slate-600 hover:text-slate-900'
@@ -1227,7 +1224,7 @@ export default function App() {
                             totalEnLetras
                           )
                         }
-                        className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1"
+                        className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 btn-press-effect"
                       >
                         <Printer className="w-3.5 h-3.5" /> Voucher
                       </button>
@@ -1238,7 +1235,7 @@ export default function App() {
                         <span className="text-[11px] text-zinc-400 block">Base Imponible</span>
                         <span className="text-lg font-semibold">S/ {formatearMoneda(subtotalNum)}</span>
                       </div>
-                      <button onClick={() => copyToClipboard(subtotalNum.toFixed(2), 'c_sub', 'Subtotal copiado')} className="p-1.5 text-zinc-400 hover:text-zinc-200">
+                      <button onClick={() => copyToClipboard(subtotalNum.toFixed(2), 'c_sub', 'Subtotal copiado')} className="p-1.5 text-zinc-400 hover:text-zinc-200 btn-press-effect">
                         {copiedItem === 'c_sub' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
@@ -1247,7 +1244,7 @@ export default function App() {
                         <span className="text-[11px] text-zinc-400 block">IGV (18.00%)</span>
                         <span className="text-lg font-semibold">S/ {formatearMoneda(igvCalculado)}</span>
                       </div>
-                      <button onClick={() => copyToClipboard(igvCalculado.toFixed(2), 'c_igv', 'IGV copiado')} className="p-1.5 text-zinc-400 hover:text-zinc-200">
+                      <button onClick={() => copyToClipboard(igvCalculado.toFixed(2), 'c_igv', 'IGV copiado')} className="p-1.5 text-zinc-400 hover:text-zinc-200 btn-press-effect">
                         {copiedItem === 'c_igv' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
@@ -1256,7 +1253,7 @@ export default function App() {
                         <span className="text-[11px] font-medium uppercase tracking-wider block opacity-70">Total Facturado</span>
                         <span className="text-2xl font-bold">S/ {formatearMoneda(totalNum)}</span>
                       </div>
-                      <button onClick={() => copyToClipboard(totalNum.toFixed(2), 'c_tot', 'Total copiado')} className={`p-2 rounded-md ${isDark ? 'bg-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border text-slate-700'}`}>
+                      <button onClick={() => copyToClipboard(totalNum.toFixed(2), 'c_tot', 'Total copiado')} className={`p-2 rounded-md btn-press-effect ${isDark ? 'bg-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border text-slate-700'}`}>
                         {copiedItem === 'c_tot' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
@@ -1307,7 +1304,7 @@ export default function App() {
                       <span className="text-[11px] text-zinc-400 block">1. Depósito Banco de la Nación (Detracción)</span>
                       <span className="text-xl font-bold">S/ {formatearMoneda(montoDetraccion)}</span>
                     </div>
-                    <button onClick={() => copyToClipboard(montoDetraccion.toFixed(2), 'c_spot')} className="p-1.5 text-zinc-400 hover:text-zinc-200">
+                    <button onClick={() => copyToClipboard(montoDetraccion.toFixed(2), 'c_spot')} className="p-1.5 text-zinc-400 hover:text-zinc-200 btn-press-effect">
                       {copiedItem === 'c_spot' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
                   </div>
@@ -1316,7 +1313,7 @@ export default function App() {
                       <span className="text-[11px] text-zinc-400 block">2. Saldo a Pagar al Proveedor</span>
                       <span className="text-xl font-bold">S/ {formatearMoneda(netoPagarProveedor)}</span>
                     </div>
-                    <button onClick={() => copyToClipboard(netoPagarProveedor.toFixed(2), 'c_neto_spot')} className="p-1.5 text-zinc-400 hover:text-zinc-200">
+                    <button onClick={() => copyToClipboard(netoPagarProveedor.toFixed(2), 'c_neto_spot')} className="p-1.5 text-zinc-400 hover:text-zinc-200 btn-press-effect">
                       {copiedItem === 'c_neto_spot' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
                   </div>
@@ -1348,7 +1345,7 @@ export default function App() {
                       <span className="text-[11px] text-zinc-400 block">Retención (3%)</span>
                       <span className="text-lg font-semibold">S/ {formatearMoneda(montoRetencion)}</span>
                     </div>
-                    <button onClick={() => copyToClipboard(montoRetencion.toFixed(2), 'c_ret')} className="p-1.5 text-zinc-400">
+                    <button onClick={() => copyToClipboard(montoRetencion.toFixed(2), 'c_ret')} className="p-1.5 text-zinc-400 btn-press-effect">
                       {copiedItem === 'c_ret' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
                   </div>
@@ -1357,7 +1354,7 @@ export default function App() {
                       <span className="text-[11px] text-zinc-400 block">Monto Neto a Cobrar</span>
                       <span className="text-xl font-bold">S/ {formatearMoneda(netoPagarRetencion)}</span>
                     </div>
-                    <button onClick={() => copyToClipboard(netoPagarRetencion.toFixed(2), 'c_neto_ret')} className="p-1.5 text-zinc-400">
+                    <button onClick={() => copyToClipboard(netoPagarRetencion.toFixed(2), 'c_neto_ret')} className="p-1.5 text-zinc-400 btn-press-effect">
                       {copiedItem === 'c_neto_ret' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
                   </div>
@@ -1398,7 +1395,7 @@ export default function App() {
                       <span className="text-[11px] text-zinc-400 block">Retención Renta (8%)</span>
                       <span className="text-lg font-semibold">S/ {formatearMoneda(montoRetencionCuarta)}</span>
                     </div>
-                    <button onClick={() => copyToClipboard(montoRetencionCuarta.toFixed(2), 'c_4ta')} className="p-1.5 text-zinc-400">
+                    <button onClick={() => copyToClipboard(montoRetencionCuarta.toFixed(2), 'c_4ta')} className="p-1.5 text-zinc-400 btn-press-effect">
                       {copiedItem === 'c_4ta' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
                   </div>
@@ -1407,7 +1404,7 @@ export default function App() {
                       <span className="text-[11px] text-zinc-400 block">Neto a Percibir</span>
                       <span className="text-xl font-bold">S/ {formatearMoneda(netoCobrarCuarta)}</span>
                     </div>
-                    <button onClick={() => copyToClipboard(netoCobrarCuarta.toFixed(2), 'c_neto_4ta')} className="p-1.5 text-zinc-400">
+                    <button onClick={() => copyToClipboard(netoCobrarCuarta.toFixed(2), 'c_neto_4ta')} className="p-1.5 text-zinc-400 btn-press-effect">
                       {copiedItem === 'c_neto_4ta' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
                   </div>
@@ -1434,7 +1431,7 @@ export default function App() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setFuenteTc('sunat')}
-                    className={`p-3 rounded-lg border text-left transition-all ${
+                    className={`p-3 rounded-lg border text-left transition-all btn-press-effect ${
                       fuenteTc === 'sunat'
                         ? isDark ? 'bg-zinc-800 border-zinc-600 text-white' : 'bg-slate-100 border-slate-400 text-slate-900 font-semibold'
                         : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-white border-slate-200 text-slate-500'
@@ -1450,7 +1447,7 @@ export default function App() {
 
                   <button
                     onClick={() => setFuenteTc('paralelo')}
-                    className={`p-3 rounded-lg border text-left transition-all ${
+                    className={`p-3 rounded-lg border text-left transition-all btn-press-effect ${
                       fuenteTc === 'paralelo'
                         ? isDark ? 'bg-zinc-800 border-zinc-600 text-white' : 'bg-slate-100 border-slate-400 text-slate-900 font-semibold'
                         : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-white border-slate-200 text-slate-500'
@@ -1471,7 +1468,7 @@ export default function App() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setTipoOperacion('vender')}
-                    className={`p-3 rounded-lg border text-center transition-all ${
+                    className={`p-3 rounded-lg border text-center transition-all btn-press-effect ${
                       tipoOperacion === 'vender'
                         ? isDark ? 'bg-zinc-100 text-zinc-950 font-bold' : 'bg-slate-900 text-white font-bold'
                         : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-white border-slate-200 text-slate-500'
@@ -1483,7 +1480,7 @@ export default function App() {
 
                   <button
                     onClick={() => setTipoOperacion('comprar')}
-                    className={`p-3 rounded-lg border text-center transition-all ${
+                    className={`p-3 rounded-lg border text-center transition-all btn-press-effect ${
                       tipoOperacion === 'comprar'
                         ? isDark ? 'bg-zinc-100 text-zinc-950 font-bold' : 'bg-slate-900 text-white font-bold'
                         : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-white border-slate-200 text-slate-500'
@@ -1633,7 +1630,7 @@ export default function App() {
                     </div>
                     <button
                       onClick={() => copyToClipboard(impuestoAlcabala.toFixed(2), 'c_alc', 'Alcabala copiada')}
-                      className={`p-2 rounded-md ${isDark ? 'bg-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border'}`}
+                      className={`p-2 rounded-md btn-press-effect ${isDark ? 'bg-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border'}`}
                     >
                       {copiedItem === 'c_alc' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
@@ -1704,7 +1701,7 @@ export default function App() {
                     </div>
                     <button
                       onClick={() => copyToClipboard(cuotaMensual.toFixed(2), 'c_pres', 'Cuota copiada')}
-                      className={`p-2 rounded-md ${isDark ? 'bg-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border'}`}
+                      className={`p-2 rounded-md btn-press-effect ${isDark ? 'bg-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border'}`}
                     >
                       {copiedItem === 'c_pres' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
@@ -1754,7 +1751,7 @@ export default function App() {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => setMotivoCese('renuncia')}
-                      className={`p-2.5 rounded-lg text-xs font-medium border text-center transition-colors ${
+                      className={`p-2.5 rounded-lg text-xs font-medium border text-center transition-colors btn-press-effect ${
                         motivoCese === 'renuncia' ? isDark ? 'bg-zinc-100 text-zinc-950 font-bold' : 'bg-slate-900 text-white font-bold' : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-white border-slate-200'
                       }`}
                     >
@@ -1762,7 +1759,7 @@ export default function App() {
                     </button>
                     <button
                       onClick={() => setMotivoCese('despido')}
-                      className={`p-2.5 rounded-lg text-xs font-medium border text-center transition-colors ${
+                      className={`p-2.5 rounded-lg text-xs font-medium border text-center transition-colors btn-press-effect ${
                         motivoCese === 'despido' ? isDark ? 'bg-zinc-100 text-zinc-950 font-bold' : 'bg-slate-900 text-white font-bold' : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-white border-slate-200'
                       }`}
                     >
@@ -1782,7 +1779,7 @@ export default function App() {
                     </div>
                     <button
                       onClick={() => copyToClipboard(totalLiquidacion.toFixed(2), 'c_liq')}
-                      className={`p-2 rounded-md ${isDark ? 'bg-zinc-800 hover:text-white' : 'bg-white border'}`}
+                      className={`p-2 rounded-md btn-press-effect ${isDark ? 'bg-zinc-800 hover:text-white' : 'bg-white border'}`}
                     >
                       {copiedItem === 'c_liq' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
@@ -1828,7 +1825,7 @@ export default function App() {
                   </div>
                   <button
                     onClick={() => copyToClipboard(sueldoNetoRecibir.toFixed(2), 'c_neto_bol')}
-                    className={`p-2 rounded-md ${isDark ? 'bg-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border'}`}
+                    className={`p-2 rounded-md btn-press-effect ${isDark ? 'bg-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border'}`}
                   >
                     {copiedItem === 'c_neto_bol' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                   </button>
@@ -1876,7 +1873,7 @@ export default function App() {
                   </div>
                   <button
                     onClick={() => copyToClipboard((laboralTab === 'grati' ? totalGratificacion : totalCts).toFixed(2), 'c_lab')}
-                    className={`p-2 rounded-md ${isDark ? 'bg-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border'}`}
+                    className={`p-2 rounded-md btn-press-effect ${isDark ? 'bg-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border'}`}
                   >
                     {copiedItem === 'c_lab' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                   </button>
@@ -1920,7 +1917,7 @@ export default function App() {
                   </div>
                   <button
                     onClick={() => copyToClipboard(deudaTotalPagar.toFixed(2), 'c_tim')}
-                    className={`p-2 rounded-md ${isDark ? 'bg-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border'}`}
+                    className={`p-2 rounded-md btn-press-effect ${isDark ? 'bg-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border'}`}
                   >
                     {copiedItem === 'c_tim' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                   </button>
@@ -1929,7 +1926,7 @@ export default function App() {
             </div>
           </div>
         ) : (
-          /* ================= MÓDULO: VALIDADOR Y CONSULTA RUC COMPLETO (TOP 10 RUCS) ================= */
+          /* ================= MÓDULO: VALIDADOR Y CONSULTA RUC COMPLETO ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1968,7 +1965,7 @@ export default function App() {
                     <p className="opacity-80">RUC generado: <strong className="font-mono">{ruc10GeneradoDesdeDni}</strong></p>
                     <button
                       onClick={() => setRucInput(ruc10GeneradoDesdeDni)}
-                      className="px-3 py-1 bg-blue-600 text-white rounded font-medium text-[11px] hover:bg-blue-500 transition-colors"
+                      className="px-3 py-1 bg-blue-600 text-white rounded font-medium text-[11px] hover:bg-blue-500 transition-colors btn-press-effect"
                     >
                       Usar este RUC 10
                     </button>
@@ -1979,7 +1976,7 @@ export default function App() {
                   <button
                     onClick={consultarDatosRuc}
                     disabled={isSearchingRuc || rucInput.length !== 11}
-                    className={`w-full py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors ${
+                    className={`w-full py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors btn-press-effect ${
                       rucInput.length === 11
                         ? isDark ? 'bg-zinc-100 text-zinc-950 hover:bg-zinc-200' : 'bg-slate-900 text-white hover:bg-slate-800'
                         : 'bg-zinc-800/40 text-zinc-500 cursor-not-allowed'
@@ -1992,7 +1989,7 @@ export default function App() {
                   <button
                     onClick={copiarEIrASunat}
                     disabled={rucInput.length !== 11}
-                    className={`w-full py-2 rounded-lg text-xs font-medium border flex items-center justify-center gap-1.5 transition-colors ${
+                    className={`w-full py-2 rounded-lg text-xs font-medium border flex items-center justify-center gap-1.5 transition-colors btn-press-effect ${
                       rucInput.length === 11
                         ? isDark ? 'bg-zinc-900 hover:bg-zinc-800 border-zinc-700 text-zinc-200' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800'
                         : 'opacity-40 cursor-not-allowed border-zinc-800 text-zinc-500'
@@ -2025,7 +2022,7 @@ export default function App() {
                           setRucInput(item.ruc);
                           setRucDataResult(PADRON_RUC_LOCAL[item.ruc]);
                         }}
-                        className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                        className={`text-xs px-2.5 py-1 rounded border transition-colors btn-press-effect ${
                           isDark
                             ? 'bg-zinc-800/60 hover:bg-zinc-800 border-zinc-700/60 text-zinc-300 hover:text-white'
                             : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700'
@@ -2112,7 +2109,7 @@ export default function App() {
         )}
       </main>
 
-      {/* FOOTER CON ENLACES LEGALES */}
+      {/* FOOTER */}
       <footer className={`border-t py-6 text-center text-xs space-y-3 ${isDark ? 'border-zinc-800/80 bg-zinc-950 text-zinc-500' : 'border-slate-200 bg-white text-slate-500'}`}>
         <p className="font-medium text-zinc-400">
           Todo en Uno Perú © 2026 — Plataforma libre de utilidades tributarias, laborales y financieras.
@@ -2125,31 +2122,31 @@ export default function App() {
         <div className="flex justify-center items-center gap-4 text-[11px] pt-1">
           <button
             onClick={() => { setLegalTab('terminos'); setShowLegalModal(true); }}
-            className="hover:underline hover:text-zinc-300 transition-colors"
+            className="hover:underline hover:text-zinc-300 transition-colors btn-press-effect"
           >
             Términos y Condiciones
           </button>
           <span>•</span>
           <button
             onClick={() => { setLegalTab('privacidad'); setShowLegalModal(true); }}
-            className="hover:underline hover:text-zinc-300 transition-colors"
+            className="hover:underline hover:text-zinc-300 transition-colors btn-press-effect"
           >
             Política de Privacidad
           </button>
           <span>•</span>
           <button
             onClick={() => { setLegalTab('deslinde'); setShowLegalModal(true); }}
-            className="hover:underline hover:text-zinc-300 transition-colors"
+            className="hover:underline hover:text-zinc-300 transition-colors btn-press-effect"
           >
             Deslinde de Responsabilidad
           </button>
         </div>
       </footer>
-      {/* MODAL DE TÉRMINOS, PRIVACIDAD Y CONDICIONES */}
-{/* MODAL DE TÉRMINOS, PRIVACIDAD Y CONDICIONES (CONTRASTE OPTIMIZADO) */}
+
+      {/* MODAL DE TÉRMINOS, PRIVACIDAD Y CONDICIONES (CONTRASTE OPTIMIZADO Y ANIMADO) */}
       {showLegalModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className={`w-full max-w-2xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col border overflow-hidden ${
+          <div className={`w-full max-w-2xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col border overflow-hidden anim-modal-in ${
             isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-200' : 'bg-white border-slate-200 text-slate-800'
           }`}>
             {/* Cabecera del Modal */}
@@ -2180,7 +2177,7 @@ export default function App() {
                 <button
                   key={tab}
                   onClick={() => setLegalTab(tab)}
-                  className={`py-3 px-3 border-b-2 font-semibold transition-colors ${
+                  className={`py-3 px-3 border-b-2 font-semibold transition-colors btn-press-effect ${
                     legalTab === tab
                       ? isDark
                         ? 'border-zinc-100 text-zinc-100'
@@ -2281,7 +2278,7 @@ export default function App() {
             }`}>
               <button
                 onClick={() => setShowLegalModal(false)}
-                className={`px-4 py-2 font-semibold rounded-lg text-xs transition-colors ${
+                className={`px-4 py-2 font-semibold rounded-lg text-xs transition-colors btn-press-effect ${
                   isDark ? 'bg-zinc-100 text-zinc-950 hover:bg-zinc-200' : 'bg-slate-900 text-white hover:bg-slate-800'
                 }`}
               >
