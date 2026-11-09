@@ -42,12 +42,18 @@ import {
   FileText,
   PiggyBank,
   Utensils,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 
 // Componentes y utilidades independientes
 import CommandPalette from './components/CommandPalette';
 import TickerBar from './components/TickerBar';
 import QuickCalculator from './components/QuickCalculator';
+import SocialShareModal from './components/SocialShareModal';
+import { soundEffects } from './utils/soundEffects';
+
+// Módulos especializados
 import HorasExtrasModule from './modules/HorasExtrasModule';
 import RegimenTributarioModule from './modules/RegimenTributarioModule';
 import UtilidadesModule from './modules/UtilidadesModule';
@@ -93,7 +99,7 @@ function validarRucSunat(rucStr: string): { valido: boolean; mensaje: string; ti
   return { valido: false, mensaje: `Dígito verificador final inválido (debería ser ${digitoCalculado}).`, tipo };
 }
 
-// Directorio Top 10 empresas peruanas
+// Directorio referencial de empresas peruanas
 const PADRON_RUC_LOCAL: Record<string, { razonSocial: string; estado: string; condicion: string; direccion: string; rubro: string }> = {
   '20131312955': {
     razonSocial: 'SUPERINTENDENCIA NACIONAL DE ADUANAS Y DE ADMINISTRACION TRIBUTARIA - SUNAT',
@@ -284,10 +290,13 @@ export default function App() {
   const [showGuide, setShowGuide] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  // Estados de Productividad, UX y Modo Zen
+  // Estados de Productividad, UX y Audio
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => soundEffects.enabled);
+  const [showSocialModal, setShowSocialModal] = useState<boolean>(false);
+
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem('todoenuno_favorites') || '["sunat", "cambio"]');
@@ -323,8 +332,15 @@ export default function App() {
     setTimeout(() => setToastMsg(null), 3000);
   };
 
+  const toggleSound = () => {
+    const next = soundEffects.toggleSound();
+    setSoundEnabled(next);
+    showToast(next ? 'Efectos de sonido: ACTIVADOS' : 'Efectos de sonido: SILENCIADOS');
+  };
+
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    soundEffects.playClick();
     const next = favorites.includes(id) ? favorites.filter((f) => f !== id) : [...favorites, id];
     setFavorites(next);
     localStorage.setItem('todoenuno_favorites', JSON.stringify(next));
@@ -344,12 +360,14 @@ export default function App() {
   };
 
   const clearHistory = () => {
+    soundEffects.playClick();
     setHistoryItems([]);
     localStorage.removeItem('todoenuno_historial');
   };
 
-  // NAVEGACIÓN FLUIDA EN EL PRIMER CLIC (SIN REBOTES NI DELAY)
+  // NAVEGACIÓN FLUIDA EN EL PRIMER CLIC (SIN REBOTES)
   const navigateTo = (mod: ModuleType) => {
+    soundEffects.playClick();
     setActiveModule(mod);
     const newUrl = mod === 'home' ? window.location.pathname : `${window.location.pathname}#${mod}`;
     window.history.pushState(null, '', newUrl);
@@ -371,12 +389,13 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Atajo Cmd + K / Ctrl + K para paleta de comandos
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
+        soundEffects.playClick();
         setIsCommandOpen((prev) => !prev);
       } else if (e.key === 'Escape') {
         if (isCommandOpen) setIsCommandOpen(false);
+        else if (showSocialModal) setShowSocialModal(false);
         else if (showLegalModal) setShowLegalModal(false);
         else if (showTicketModal) {
           setShowTicketModal(false);
@@ -391,9 +410,10 @@ export default function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showTicketModal, showLegalModal, isCommandOpen]);
+  }, [showTicketModal, showLegalModal, isCommandOpen, showSocialModal]);
 
   const toggleTheme = () => {
+    soundEffects.playClick();
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
     localStorage.setItem('todoenuno_theme', nextTheme);
@@ -401,6 +421,7 @@ export default function App() {
 
   const copyToClipboard = (text: string | number, key: string, label?: string) => {
     navigator.clipboard.writeText(String(text));
+    soundEffects.playPop();
     setCopiedItem(key);
     if (label) showToast(label);
     setTimeout(() => setCopiedItem(null), 2000);
@@ -408,6 +429,7 @@ export default function App() {
 
   const descargarVoucherImagen = async (formato: 'png' | 'jpeg') => {
     if (!voucherRef.current) return;
+    soundEffects.playClick();
     setShowDownloadMenu(false);
     try {
       const dataUrl =
@@ -426,6 +448,7 @@ export default function App() {
   };
 
   const ejecutarImpresion = (tamano: 'a4' | 'letter' | 'ticket') => {
+    soundEffects.playClick();
     setPrintSize(tamano);
     setShowPrintMenu(false);
     setTimeout(() => {
@@ -441,6 +464,7 @@ export default function App() {
   };
 
   const compartirVoucherNativo = async () => {
+    soundEffects.playClick();
     const texto = generarTextoWhatsapp();
     if (navigator.share) {
       try {
@@ -549,7 +573,7 @@ export default function App() {
       setSubtotalInput(sub);
       addHistoryItem('IGV', `Total S/ ${num.toFixed(2)} → Subtotal S/ ${sub}`);
     } else {
-      setTotalInput('');
+      setSubtotalInput('');
     }
   };
 
@@ -691,11 +715,13 @@ export default function App() {
 
   const consultarDatosRuc = async () => {
     setIsSearchingRuc(true);
+    soundEffects.playClick();
     const cleanRuc = rucInput.trim();
     if (PADRON_RUC_LOCAL[cleanRuc]) {
       setTimeout(() => {
         setRucDataResult(PADRON_RUC_LOCAL[cleanRuc]);
         setIsSearchingRuc(false);
+        soundEffects.playPop();
         addHistoryItem('Consulta RUC', `${cleanRuc} - ${PADRON_RUC_LOCAL[cleanRuc].razonSocial.substring(0, 25)}...`);
       }, 400);
       return;
@@ -712,6 +738,7 @@ export default function App() {
           rubro: data.actividadEconomica || 'COMERCIO Y SERVICIOS',
         };
         setRucDataResult(info);
+        soundEffects.playPop();
         addHistoryItem('Consulta RUC', `${cleanRuc} - ${info.razonSocial.substring(0, 25)}...`);
       } else {
         setRucDataResult({
@@ -738,12 +765,14 @@ export default function App() {
   const copiarEIrASunat = () => {
     if (rucInput.length === 11) {
       navigator.clipboard.writeText(rucInput);
+      soundEffects.playPop();
       showToast('¡RUC copiado al portapapeles! Pégalo con Ctrl+V en SUNAT.');
       window.open('https://e-consultaruc.sunat.gob.pe/cl-ti-itmrconsruc/FrameCriterioBusquedaWeb.jsp', '_blank');
     }
   };
 
   const abrirGoogleCalendar = (periodo: string, fechaVencimiento: string) => {
+    soundEffects.playClick();
     const titulo = encodeURIComponent(`Declaración Jurada SUNAT - Periodo ${periodo}`);
     const detalles = encodeURIComponent(`Vencimiento de obligaciones tributarias (IGV-Renta) para RUC terminado en ${digitoRucCronograma}. Programado desde Todo en Uno Perú.`);
     const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titulo}&details=${detalles}`;
@@ -751,11 +780,12 @@ export default function App() {
   };
 
   const abrirTicket = (titulo: string, filas: { label: string; valor: string }[], total: string, letras: string) => {
+    soundEffects.playPop();
     setTicketData({ titulo, filas, total, letras });
     setShowTicketModal(true);
   };
 
-  // PALETA VIBRANTE DE COLORES POR MÓDULO (FINTECH STYLE)
+  // PALETA VIBRANTE DE COLORES POR MÓDULO
   const modulesList: {
     id: ModuleType;
     title: string;
@@ -1043,7 +1073,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Ticker informativo superior (visible si no está en modo Zen) */}
+      {/* Ticker informativo superior con Semáforo y Cinta Marquee continua */}
       {!isZenMode && <TickerBar isDark={isDark} onNavigateToCronograma={() => navigateTo('cronograma')} />}
 
       {/* MODAL DE VOUCHER INTERACTIVO */}
@@ -1087,7 +1117,12 @@ export default function App() {
 
               <div className="py-4 space-y-1.5 border-b border-dashed border-zinc-300 text-center">
                 <span className="text-[10px] text-zinc-500 uppercase block font-sans">IMPORTE TOTAL</span>
-                <span className="text-2xl font-black tracking-tight">{ticketData.total}</span>
+                <span
+                  className="text-2xl font-black tracking-tight hover-currency-tooltip"
+                  data-usd={`≈ $ ${(parseFloat(ticketData.total.replace(/[^0-9.]/g, '')) / 3.427).toFixed(2)} USD`}
+                >
+                  {ticketData.total}
+                </span>
                 <p className="text-[9px] text-zinc-500 uppercase leading-relaxed pt-1">{ticketData.letras}</p>
               </div>
 
@@ -1097,6 +1132,17 @@ export default function App() {
             </div>
 
             <div className="pt-4 space-y-2.5">
+              {/* Botón para abrir el generador de Tarjetas Sociales / Ray.so */}
+              <button
+                onClick={() => {
+                  soundEffects.playClick();
+                  setShowSocialModal(true);
+                }}
+                className="w-full py-2 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-lg text-xs font-sans font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all btn-press-effect"
+              >
+                <Sparkles className="w-3.5 h-3.5" /> Generar Tarjeta Social (Ray.so)
+              </button>
+
               <div className="grid grid-cols-2 gap-2 relative">
                 <div className="relative">
                   <button
@@ -1208,7 +1254,7 @@ export default function App() {
         </div>
       )}
 
-      {/* HEADER ÚNICO FIJO (Ocultable en Modo Zen) */}
+      {/* HEADER ÚNICO FIJO */}
       {!isZenMode && (
         <header className={`border-b ${borderHeader} backdrop-blur sticky top-0 z-40`}>
           <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
@@ -1244,7 +1290,10 @@ export default function App() {
 
             {/* Buscador de cabecera con acceso directo a paleta Cmd+K */}
             <div
-              onClick={() => setIsCommandOpen(true)}
+              onClick={() => {
+                soundEffects.playClick();
+                setIsCommandOpen(true);
+              }}
               className="flex-1 max-w-md relative hidden md:flex items-center cursor-pointer"
             >
               <Search className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-zinc-500' : 'text-slate-400'}`} />
@@ -1267,7 +1316,10 @@ export default function App() {
               {activeModule !== 'home' && (
                 <>
                   <button
-                    onClick={() => setShowGuide(!showGuide)}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setShowGuide(!showGuide);
+                    }}
                     className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border transition-colors btn-press-effect ${
                       showGuide
                         ? isDark ? 'bg-zinc-200 text-zinc-950 font-semibold' : 'bg-slate-900 text-white font-semibold'
@@ -1292,9 +1344,21 @@ export default function App() {
                 </>
               )}
 
+              {/* Botón Silenciador de Sonido Háptico */}
+              <button
+                onClick={toggleSound}
+                title={soundEnabled ? 'Silenciar efectos sonoros' : 'Activar efectos sonoros hápticos'}
+                className={`p-2 rounded-lg border transition-colors btn-press-effect ${
+                  isDark ? 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-300' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
+                }`}
+              >
+                {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-500" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
+              </button>
+
               {/* Modo Privacidad (Privacy Blur) */}
               <button
                 onClick={() => {
+                  soundEffects.playClick();
                   setIsPrivacyMode(!isPrivacyMode);
                   showToast(isPrivacyMode ? 'Modo privacidad desactivado' : 'Modo privacidad activo (cifras borrosas)');
                 }}
@@ -1311,7 +1375,10 @@ export default function App() {
               {/* Modo Zen (Pantalla Completa) */}
               {activeModule !== 'home' && (
                 <button
-                  onClick={() => setIsZenMode(!isZenMode)}
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setIsZenMode(!isZenMode);
+                  }}
                   title="Modo Zen: Ocultar encabezados para máxima concentración"
                   className={`p-2 rounded-lg border transition-colors btn-press-effect ${
                     isZenMode
@@ -1338,19 +1405,22 @@ export default function App() {
         </header>
       )}
 
-      {/* Botón flotante para restaurar del modo Zen */}
+      {/* Botón flotante para salir del modo Zen */}
       {isZenMode && (
         <button
-          onClick={() => setIsZenMode(false)}
+          onClick={() => {
+            soundEffects.playClick();
+            setIsZenMode(false);
+          }}
           className="fixed top-4 right-4 z-50 p-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xl flex items-center gap-1.5 text-xs font-bold btn-press-effect"
         >
           <Minimize2 className="w-4 h-4" /> Salir de Modo Zen
         </button>
       )}
 
-      {/* CONTENIDO PRINCIPAL (Con clase condicional de Privacidad) */}
+      {/* CONTENIDO PRINCIPAL */}
       <main key={activeModule} className={`flex-1 max-w-6xl w-full mx-auto px-4 py-8 anim-fade-in-up ${isPrivacyMode ? 'privacy-active' : ''}`}>
-        {/* PANTALLA PRINCIPAL CON TARJETAS CROMÁTICAS */}
+        {/* PANTALLA PRINCIPAL */}
         {activeModule === 'home' && (
           <div className="space-y-8">
             <div className="max-w-2xl mx-auto text-center pt-2 pb-1">
@@ -1375,7 +1445,7 @@ export default function App() {
               />
             </div>
 
-            {/* GRILLA DE TARJETAS CON FAVORITOS ANCLADOS Y CONTRASTE EN MODO CLARO */}
+            {/* GRILLA DE TARJETAS CON FAVORITOS ANCLADOS */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredModules.map((item) => {
                 const IconComp = item.icon;
@@ -1505,7 +1575,10 @@ export default function App() {
                 {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'bc'].map((dig) => (
                   <button
                     key={dig}
-                    onClick={() => setDigitoRucCronograma(dig)}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setDigitoRucCronograma(dig);
+                    }}
                     className={`px-3.5 py-2 rounded-lg text-xs font-mono font-bold border transition-colors btn-press-effect ${
                       digitoRucCronograma === dig
                         ? 'bg-sky-600 text-white border-sky-600 shadow-sm'
@@ -1571,7 +1644,10 @@ export default function App() {
                   <label className="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-zinc-300">Régimen Laboral de la Empresa</label>
                   <div className="grid grid-cols-3 gap-2">
                     <button
-                      onClick={() => setRegimenEmpresa('micro')}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setRegimenEmpresa('micro');
+                      }}
                       className={`p-2.5 rounded-lg text-xs font-semibold border text-center transition-colors btn-press-effect ${
                         regimenEmpresa === 'micro' ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-slate-50 border-slate-300 text-slate-700'
                       }`}
@@ -1579,7 +1655,10 @@ export default function App() {
                       Microempresa
                     </button>
                     <button
-                      onClick={() => setRegimenEmpresa('pequena')}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setRegimenEmpresa('pequena');
+                      }}
                       className={`p-2.5 rounded-lg text-xs font-semibold border text-center transition-colors btn-press-effect ${
                         regimenEmpresa === 'pequena' ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-slate-50 border-slate-300 text-slate-700'
                       }`}
@@ -1587,7 +1666,10 @@ export default function App() {
                       Pequeña Empresa
                     </button>
                     <button
-                      onClick={() => setRegimenEmpresa('general')}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setRegimenEmpresa('general');
+                      }}
                       className={`p-2.5 rounded-lg text-xs font-semibold border text-center transition-colors btn-press-effect ${
                         regimenEmpresa === 'general' ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-slate-50 border-slate-300 text-slate-700'
                       }`}
@@ -1636,7 +1718,12 @@ export default function App() {
                   <div className="p-4 rounded-xl border flex items-center justify-between bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-950/30 border-indigo-200 dark:border-indigo-900/60">
                     <div>
                       <span className="text-[11px] font-bold uppercase tracking-wider block text-indigo-800 dark:text-indigo-300">Costo Total Mensual Empresa</span>
-                      <span className="text-2xl font-black text-slate-900 dark:text-white">S/ {formatearMoneda(costoTotalMensual)}</span>
+                      <span
+                        className="text-2xl font-black text-slate-900 dark:text-white hover-currency-tooltip"
+                        data-usd={`≈ $ ${(costoTotalMensual / 3.427).toFixed(2)} USD`}
+                      >
+                        S/ {formatearMoneda(costoTotalMensual)}
+                      </span>
                     </div>
                     <button
                       onClick={() =>
@@ -1680,7 +1767,10 @@ export default function App() {
                 {(['igv', 'spot', 'retencion', 'cuarta'] as const).map((tab) => (
                   <button
                     key={tab}
-                    onClick={() => setSunatSubTab(tab)}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setSunatSubTab(tab);
+                    }}
                     className={`px-3 py-1.5 rounded-md text-xs font-bold whitespace-nowrap transition-colors btn-press-effect ${
                       sunatSubTab === tab
                         ? 'bg-blue-600 text-white shadow-sm'
@@ -1771,7 +1861,12 @@ export default function App() {
                     <div className="p-4 rounded-xl border flex justify-between items-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md">
                       <div>
                         <span className="text-[11px] font-bold uppercase tracking-wider block opacity-90">Total Facturado</span>
-                        <span className="text-2xl font-black">S/ {formatearMoneda(totalNum)}</span>
+                        <span
+                          className="text-2xl font-black hover-currency-tooltip"
+                          data-usd={`≈ $ ${(totalNum / 3.427).toFixed(2)} USD`}
+                        >
+                          S/ {formatearMoneda(totalNum)}
+                        </span>
                       </div>
                       <button onClick={() => copyToClipboard(totalNum.toFixed(2), 'c_tot', 'Total copiado')} className="p-2 rounded-lg bg-white/20 hover:bg-white/30 text-white btn-press-effect">
                         {copiedItem === 'c_tot' ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
@@ -1952,7 +2047,10 @@ export default function App() {
                 <span className="text-xs font-semibold block text-slate-800 dark:text-zinc-200">1. Propósito de la consulta</span>
                 <div className="grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => setFuenteTc('sunat')}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setFuenteTc('sunat');
+                    }}
                     className={`p-3 rounded-lg border text-left transition-all btn-press-effect ${
                       fuenteTc === 'sunat'
                         ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
@@ -1968,7 +2066,10 @@ export default function App() {
                   </button>
 
                   <button
-                    onClick={() => setFuenteTc('paralelo')}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setFuenteTc('paralelo');
+                    }}
                     className={`p-3 rounded-lg border text-left transition-all btn-press-effect ${
                       fuenteTc === 'paralelo'
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
@@ -1989,7 +2090,10 @@ export default function App() {
                 <span className="text-xs font-semibold block text-slate-800 dark:text-zinc-200">2. Tipo de operación</span>
                 <div className="grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => setTipoOperacion('vender')}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setTipoOperacion('vender');
+                    }}
                     className={`p-3 rounded-lg border text-center transition-all btn-press-effect ${
                       tipoOperacion === 'vender'
                         ? 'bg-slate-900 text-white font-bold dark:bg-zinc-100 dark:text-zinc-950 shadow-sm'
@@ -2001,7 +2105,10 @@ export default function App() {
                   </button>
 
                   <button
-                    onClick={() => setTipoOperacion('comprar')}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setTipoOperacion('comprar');
+                    }}
                     className={`p-3 rounded-lg border text-center transition-all btn-press-effect ${
                       tipoOperacion === 'comprar'
                         ? 'bg-slate-900 text-white font-bold dark:bg-zinc-100 dark:text-zinc-950 shadow-sm'
@@ -2150,7 +2257,12 @@ export default function App() {
                   <div className="p-4 rounded-xl border flex items-center justify-between bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-md">
                     <div>
                       <span className="text-[11px] font-bold uppercase tracking-wider block opacity-90">Monto Alcabala a Pagar</span>
-                      <span className="text-2xl font-black">S/ {formatearMoneda(impuestoAlcabala)}</span>
+                      <span
+                        className="text-2xl font-black hover-currency-tooltip"
+                        data-usd={`≈ $ ${(impuestoAlcabala / 3.427).toFixed(2)} USD`}
+                      >
+                        S/ {formatearMoneda(impuestoAlcabala)}
+                      </span>
                     </div>
                     <button
                       onClick={() => copyToClipboard(impuestoAlcabala.toFixed(2), 'c_alc', 'Alcabala copiada')}
@@ -2223,7 +2335,12 @@ export default function App() {
                   <div className="p-4 rounded-xl border flex items-center justify-between bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md">
                     <div>
                       <span className="text-[11px] font-bold uppercase tracking-wider block opacity-90">Cuota Fija Mensual</span>
-                      <span className="text-2xl font-black">S/ {formatearMoneda(cuotaMensual)}</span>
+                      <span
+                        className="text-2xl font-black hover-currency-tooltip"
+                        data-usd={`≈ $ ${(cuotaMensual / 3.427).toFixed(2)} USD`}
+                      >
+                        S/ {formatearMoneda(cuotaMensual)}
+                      </span>
                     </div>
                     <button
                       onClick={() => copyToClipboard(cuotaMensual.toFixed(2), 'c_pres', 'Cuota copiada')}
@@ -2278,7 +2395,10 @@ export default function App() {
                   <label className="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-zinc-300">Motivo del Cese</label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
-                      onClick={() => setMotivoCese('renuncia')}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setMotivoCese('renuncia');
+                      }}
                       className={`p-2.5 rounded-lg text-xs font-semibold border text-center transition-colors btn-press-effect ${
                         motivoCese === 'renuncia' ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-slate-50 border-slate-300 text-slate-700'
                       }`}
@@ -2286,7 +2406,10 @@ export default function App() {
                       Renuncia Voluntaria
                     </button>
                     <button
-                      onClick={() => setMotivoCese('despido')}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setMotivoCese('despido');
+                      }}
                       className={`p-2.5 rounded-lg text-xs font-semibold border text-center transition-colors btn-press-effect ${
                         motivoCese === 'despido' ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-slate-50 border-slate-300 text-slate-700'
                       }`}
@@ -2303,7 +2426,12 @@ export default function App() {
                   <div className="p-4 rounded-xl border flex items-center justify-between bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md">
                     <div>
                       <span className="text-[11px] font-bold uppercase tracking-wider block opacity-90">Total Liquidación a Cobrar</span>
-                      <span className="text-2xl font-black">S/ {formatearMoneda(totalLiquidacion)}</span>
+                      <span
+                        className="text-2xl font-black hover-currency-tooltip"
+                        data-usd={`≈ $ ${(totalLiquidacion / 3.427).toFixed(2)} USD`}
+                      >
+                        S/ {formatearMoneda(totalLiquidacion)}
+                      </span>
                     </div>
                     <button
                       onClick={() => copyToClipboard(totalLiquidacion.toFixed(2), 'c_liq')}
@@ -2351,7 +2479,12 @@ export default function App() {
                 <div className="p-4 rounded-xl border flex items-center justify-between bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md">
                   <div>
                     <span className="text-[11px] font-bold uppercase tracking-wider block opacity-90">Sueldo Neto a Percibir</span>
-                    <span className="text-2xl font-black">S/ {formatearMoneda(sueldoNetoRecibir)}</span>
+                    <span
+                      className="text-2xl font-black hover-currency-tooltip"
+                      data-usd={`≈ $ ${(sueldoNetoRecibir / 3.427).toFixed(2)} USD`}
+                    >
+                      S/ {formatearMoneda(sueldoNetoRecibir)}
+                    </span>
                   </div>
                   <button
                     onClick={() => copyToClipboard(sueldoNetoRecibir.toFixed(2), 'c_neto_bol')}
@@ -2399,7 +2532,10 @@ export default function App() {
                     <span className="text-[11px] font-bold uppercase tracking-wider block opacity-90">
                       {laboralTab === 'grati' ? 'Total Gratificación' : 'Total CTS'}
                     </span>
-                    <span className="text-2xl font-black">
+                    <span
+                      className="text-2xl font-black hover-currency-tooltip"
+                      data-usd={`≈ $ ${((laboralTab === 'grati' ? totalGratificacion : totalCts) / 3.427).toFixed(2)} USD`}
+                    >
                       S/ {formatearMoneda(laboralTab === 'grati' ? totalGratificacion : totalCts)}
                     </span>
                   </div>
@@ -2447,7 +2583,12 @@ export default function App() {
                 <div className="p-4 rounded-xl border flex items-center justify-between bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md">
                   <div>
                     <span className="text-[11px] font-bold uppercase tracking-wider block opacity-90">Total Actualizado a Pagar</span>
-                    <span className="text-2xl font-black">S/ {formatearMoneda(deudaTotalPagar)}</span>
+                    <span
+                      className="text-2xl font-black hover-currency-tooltip"
+                      data-usd={`≈ $ ${(deudaTotalPagar / 3.427).toFixed(2)} USD`}
+                    >
+                      S/ {formatearMoneda(deudaTotalPagar)}
+                    </span>
                   </div>
                   <button
                     onClick={() => copyToClipboard(deudaTotalPagar.toFixed(2), 'c_tim')}
@@ -2500,7 +2641,10 @@ export default function App() {
                     </div>
                     <p className="text-slate-700 dark:text-zinc-300">RUC generado: <strong className="font-mono text-blue-600">{ruc10GeneradoDesdeDni}</strong></p>
                     <button
-                      onClick={() => setRucInput(ruc10GeneradoDesdeDni)}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setRucInput(ruc10GeneradoDesdeDni);
+                      }}
                       className="px-3 py-1 bg-blue-600 text-white rounded-md font-bold text-[11px] hover:bg-blue-500 transition-colors btn-press-effect shadow-xs"
                     >
                       Usar este RUC 10
@@ -2554,6 +2698,7 @@ export default function App() {
                       <button
                         key={item.ruc}
                         onClick={() => {
+                          soundEffects.playClick();
                           setRucInput(item.ruc);
                           setRucDataResult(PADRON_RUC_LOCAL[item.ruc]);
                         }}
@@ -2643,7 +2788,7 @@ export default function App() {
         )}
       </main>
 
-      {/* FOOTER (Ocultable en Modo Zen) */}
+      {/* FOOTER */}
       {!isZenMode && (
         <footer className={`border-t py-6 text-center text-xs space-y-3 ${isDark ? 'border-zinc-800/80 bg-zinc-950/80 text-zinc-500' : 'border-slate-200 bg-white/90 text-slate-600'}`}>
           <p className="font-semibold text-slate-700 dark:text-zinc-400">
@@ -2694,6 +2839,20 @@ export default function App() {
           copyToClipboard(val, 'quick_calc', 'Resultado copiado al portapapeles');
         }}
       />
+
+      {/* MODAL DE GENERADOR DE TARJETA SOCIAL (Ray.so Style) */}
+      {showSocialModal && ticketData && (
+        <SocialShareModal
+          isOpen={showSocialModal}
+          onClose={() => setShowSocialModal(false)}
+          titulo={ticketData.titulo}
+          filas={ticketData.filas}
+          total={ticketData.total}
+          letras={ticketData.letras}
+          isDark={isDark}
+          showToast={showToast}
+        />
+      )}
 
       {/* MODAL LEGAL */}
       {showLegalModal && (

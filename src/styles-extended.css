@@ -141,3 +141,54 @@ input:focus, select:focus {
 .privacy-active .text-2xl:hover {
   filter: blur(0px);
 }
+/* Animación de la cinta ticker continua */
+@keyframes ticker-slide {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: ticker-slide 32s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Tooltip hover */
+.hover-currency-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.hover-currency-tooltip::after {
+  content: attr(data-usd);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(15, 23, 42, 0.95);
+  color: #38bdf8;
+  font-size: 10px;
+  font-family: monospace;
+  padding: 3px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 50;
+}
+
+.hover-currency-tooltip:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
