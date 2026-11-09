@@ -1,0 +1,18 @@
+{
+  "name": "Todo en Uno Perú",
+  "short_name": "TodoEnUno",
+  "description": "Utilidades tributarias, laborales y financieras para profesionales y pymes en Perú.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2309090b'/><text x='50%' y='58%' dominant-baseline='central' text-anchor='middle' fill='%23ffffff' font-family='system-ui, sans-serif' font-weight='900' font-size='44'>T1</text><circle cx='80' cy='24' r='8' fill='%23ef4444'/></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
