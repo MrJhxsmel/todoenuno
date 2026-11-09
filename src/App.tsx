@@ -1007,28 +1007,11 @@ export default function App() {
           </div>
         </div>
       </header>
-
-      {/* CONTENIDO PRINCIPAL */}
+      
+{/* CONTENIDO PRINCIPAL AISLADO POR MÓDULO */}
       <main key={activeModule} className="flex-1 max-w-6xl w-full mx-auto px-4 py-8 anim-fade-in-up">
-        {/* NUEVOS MÓDULOS MODULARIZADOS */}
-        {activeModule === 'horas_extras' && (
-          <HorasExtrasModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} abrirTicket={abrirTicket} showToast={showToast} />
-        )}
-        {activeModule === 'regimen' && (
-          <RegimenTributarioModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} />
-        )}
-        {activeModule === 'utilidades' && (
-          <UtilidadesModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} abrirTicket={abrirTicket} showToast={showToast} />
-        )}
-        {activeModule === 'precios_pos' && (
-          <PreciosPosModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} showToast={showToast} />
-        )}
-        {activeModule === 'renuncia' && (
-          <CartaRenunciaModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} showToast={showToast} />
-        )}
-
-        {/* MÓDULOS EXISTENTES */}
-        {activeModule === 'home' ? (
+        {/* PANTALLA PRINCIPAL */}
+        {activeModule === 'home' && (
           <div className="space-y-8">
             <div className="max-w-xl mx-auto text-center pt-2 pb-1">
               <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-2">
@@ -1087,6 +1070,7 @@ export default function App() {
               })}
             </div>
 
+            {/* HISTORIAL LOCAL */}
             {historyItems.length > 0 && (
               <div className={`rounded-xl p-4 border ${bgCard} mt-8 glass-card`}>
                 <div className="flex items-center justify-between border-b pb-2 mb-3 border-zinc-800">
@@ -1112,7 +1096,27 @@ export default function App() {
               </div>
             )}
           </div>
-        ) : activeModule === 'cronograma' ? (
+        )}
+
+        {/* MÓDULOS INDEPENDIENTES */}
+        {activeModule === 'horas_extras' && (
+          <HorasExtrasModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} abrirTicket={abrirTicket} showToast={showToast} />
+        )}
+        {activeModule === 'regimen' && (
+          <RegimenTributarioModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} />
+        )}
+        {activeModule === 'utilidades' && (
+          <UtilidadesModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} abrirTicket={abrirTicket} showToast={showToast} />
+        )}
+        {activeModule === 'precios_pos' && (
+          <PreciosPosModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} showToast={showToast} />
+        )}
+        {activeModule === 'renuncia' && (
+          <CartaRenunciaModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} showToast={showToast} />
+        )}
+
+        {/* CRONOGRAMA */}
+        {activeModule === 'cronograma' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1161,7 +1165,10 @@ export default function App() {
               ))}
             </div>
           </div>
-        ) : activeModule === 'costo_empleador' ? (
+        )}
+
+        {/* COSTO LABORAL */}
+        {activeModule === 'costo_empleador' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1284,7 +1291,10 @@ export default function App() {
               </div>
             </div>
           </div>
-        ) : activeModule === 'sunat' ? (
+        )}
+
+        {/* SUNAT IGV/SPOT */}
+        {activeModule === 'sunat' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1517,7 +1527,7 @@ export default function App() {
                       />
                     </div>
                   </div>
-                  <label className={`flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer text-xs ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-300'}`}>
+                  <label className={`flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer text-xs ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-300'}`}>
                     <input
                       type="checkbox"
                       checked={tieneSuspension}
@@ -1551,7 +1561,10 @@ export default function App() {
               </div>
             )}
           </div>
-        ) : activeModule === 'cambio' ? (
+        )}
+
+        {/* TIPO DE CAMBIO */}
+        {activeModule === 'cambio' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1715,7 +1728,10 @@ export default function App() {
               </div>
             </div>
           </div>
-        ) : activeModule === 'alcabala' ? (
+        )}
+
+        {/* ALCABALA */}
+        {activeModule === 'alcabala' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1776,7 +1792,10 @@ export default function App() {
               </div>
             </div>
           </div>
-        ) : activeModule === 'prestamo' ? (
+        )}
+
+        {/* PRÉSTAMO */}
+        {activeModule === 'prestamo' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1853,7 +1872,10 @@ export default function App() {
               </div>
             </div>
           </div>
-        ) : activeModule === 'liquidacion' ? (
+        )}
+
+        {/* LIQUIDACIÓN */}
+        {activeModule === 'liquidacion' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1923,7 +1945,10 @@ export default function App() {
               </div>
             </div>
           </div>
-        ) : activeModule === 'sueldo' ? (
+        )}
+
+        {/* SUELDO NETO */}
+        {activeModule === 'sueldo' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1967,7 +1992,10 @@ export default function App() {
               </div>
             </div>
           </div>
-        ) : activeModule === 'laboral' ? (
+        )}
+
+        {/* LABORAL CTS & GRATI */}
+        {activeModule === 'laboral' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -2014,7 +2042,10 @@ export default function App() {
               </div>
             </div>
           </div>
-        ) : activeModule === 'tim' ? (
+        )}
+
+        {/* TIM INTERESES SUNAT */}
+        {activeModule === 'tim' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -2057,7 +2088,10 @@ export default function App() {
               </div>
             </div>
           </div>
-        ) : (
+        )}
+
+        {/* VALIDADOR DE RUC (AISLADO ÚNICAMENTE PARA SU PÁGINA) */}
+        {activeModule === 'ruc' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
