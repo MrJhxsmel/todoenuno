@@ -2107,9 +2107,14 @@ export default function App() {
         )}
       </main>
 
-      {/* FOOTER */}
-      <footer className={`border-t py-6 text-center text-xs ${isDark ? 'border-zinc-800/80 bg-zinc-950 text-zinc-500' : 'border-slate-200 bg-white text-slate-500'}`}>
-        <p>Todo en Uno Perú © 2026 — Plataforma libre de utilidades tributarias, laborales y financieras.</p>
+      {/* FOOTER CON DISCLAIMER DE PRIVACIDAD LOCAL */}
+      <footer className={`border-t py-6 text-center text-xs space-y-2 ${isDark ? 'border-zinc-800/80 bg-zinc-950 text-zinc-500' : 'border-slate-200 bg-white text-slate-500'}`}>
+        <p className="font-medium text-zinc-400">
+          Todo en Uno Perú © 2026 — Plataforma libre de utilidades tributarias, laborales y financieras.
+        </p>
+        <p className="text-[11px] max-w-xl mx-auto opacity-75 leading-relaxed px-4">
+          🔒 <strong>Privacidad Garantizada:</strong> Todos los cálculos y comprobantes se procesan de forma 100% local en tu navegador. Tus montos, sueldos y facturas nunca se envían ni almacenan en servidores externos.
+        </p>
       </footer>
     </div>
   );
