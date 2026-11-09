@@ -316,14 +316,25 @@ export default function App() {
 
   const navigateTo = (mod: ModuleType) => {
     setActiveModule(mod);
-    window.location.hash = mod === 'home' ? '' : mod;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const newUrl = mod === 'home' 
+      ? window.location.pathname 
+      : `${window.location.pathname}#${mod}`;
+    
+    window.history.pushState(null, '', newUrl);
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
-  useEffect(() => {
-    const handlePopState = () => setActiveModule(getInitialModule());
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+useEffect(() => {
+    const handleLocationChange = () => {
+      setActiveModule(getInitialModule());
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
   }, []);
 
   useEffect(() => {
