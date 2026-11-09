@@ -781,10 +781,12 @@ export default function App() {
   }, [searchTerm]);
 
   const isDark = theme === 'dark';
-  const bgMain = isDark ? 'bg-zinc-950 text-zinc-100' : 'bg-slate-50 text-slate-800';
-  const bgCard = isDark ? 'bg-zinc-900/60 border-zinc-800' : 'bg-white border-slate-200 shadow-sm';
+  const bgMain = isDark
+    ? 'bg-zinc-950 text-zinc-100 bg-ambient-dark theme-dark'
+    : 'bg-slate-50 text-slate-800 bg-ambient-light theme-light';
+  const bgCard = isDark ? 'bg-zinc-900/60 border-zinc-800/80' : 'bg-white/80 border-slate-200/80 shadow-sm';
   const bgInput = isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-100' : 'bg-slate-50 border-slate-300 text-slate-900';
-  const borderHeader = isDark ? 'border-zinc-800/80 bg-zinc-900/50' : 'border-slate-200 bg-white/80';
+  const borderHeader = isDark ? 'border-zinc-800/80 bg-zinc-900/50' : 'border-slate-200/80 bg-white/80';
 
   const badgeValid = isDark
     ? 'bg-emerald-950/40 border-emerald-800/80 text-emerald-300'
@@ -1102,11 +1104,11 @@ export default function App() {
                   <div
                     key={item.id}
                     onClick={() => navigateTo(item.id as any)}
-                    className={`group rounded-xl p-5 border transition-all cursor-pointer flex flex-col justify-between ${bgCard} hover:border-zinc-500 card-hover-effect`}
+                    className={`group rounded-xl p-5 border transition-all cursor-pointer flex flex-col justify-between ${bgCard} hover:border-zinc-500 card-hover-effect glass-card`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center border ${
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center border icon-bounce ${
                           isDark ? 'bg-zinc-800/80 border-zinc-700/60 text-zinc-200' : 'bg-slate-100 border-slate-200 text-slate-700'
                         }`}>
                           <IconComp className="w-5 h-5" />
@@ -1135,7 +1137,7 @@ export default function App() {
 
             {/* HISTORIAL LOCAL */}
             {historyItems.length > 0 && (
-              <div className={`rounded-xl p-4 border ${bgCard} mt-8`}>
+              <div className={`rounded-xl p-4 border ${bgCard} mt-8 glass-card`}>
                 <div className="flex items-center justify-between border-b pb-2 mb-3 border-zinc-800">
                   <div className="flex items-center gap-2">
                     <History className="w-4 h-4 text-zinc-400" />
@@ -1147,7 +1149,7 @@ export default function App() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                   {historyItems.map((h) => (
-                    <div key={h.id} className={`p-2.5 rounded-lg border text-xs ${isDark ? 'bg-zinc-950 border-zinc-800/80' : 'bg-slate-50 border-slate-200'}`}>
+                    <div key={h.id} className={`p-2.5 rounded-lg border text-xs ${isDark ? 'bg-zinc-950/70 border-zinc-800/80' : 'bg-slate-50/80 border-slate-200'}`}>
                       <div className="flex justify-between items-center text-[10px] text-zinc-500 mb-1">
                         <span className="font-semibold text-zinc-400 uppercase">{h.modulo}</span>
                         <span>{h.fecha}</span>
@@ -1172,7 +1174,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className={`p-5 rounded-xl border space-y-4 ${bgCard}`}>
+            <div className={`p-5 rounded-xl border space-y-4 ${bgCard} glass-card`}>
               <span className="text-xs font-medium block">Selecciona el último dígito de tu RUC:</span>
               <div className="flex flex-wrap gap-2">
                 {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'bc'].map((dig) => (
@@ -1182,7 +1184,7 @@ export default function App() {
                     className={`px-3.5 py-2 rounded-lg text-xs font-mono font-bold border transition-colors btn-press-effect ${
                       digitoRucCronograma === dig
                         ? isDark ? 'bg-zinc-100 text-zinc-950 border-white' : 'bg-slate-900 text-white border-slate-900'
-                        : isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-600' : 'bg-white border-slate-300 text-slate-700'
+                        : isDark ? 'bg-zinc-950/80 border-zinc-800 text-zinc-400 hover:border-zinc-600' : 'bg-white border-slate-300 text-slate-700'
                     }`}
                   >
                     {dig === 'bc' ? 'Buenos Contribuyentes' : `Dígito ${dig}`}
@@ -1193,7 +1195,7 @@ export default function App() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {(CRONOGRAMA_SUNAT[digitoRucCronograma] || CRONOGRAMA_SUNAT['0']).map((item, idx) => (
-                <div key={idx} className={`p-4 rounded-xl border flex flex-col justify-between ${bgCard} card-hover-effect`}>
+                <div key={idx} className={`p-4 rounded-xl border flex flex-col justify-between ${bgCard} card-hover-effect glass-card`}>
                   <div>
                     <span className="text-[11px] text-zinc-500 uppercase tracking-wider block font-semibold">Periodo: {item.periodo}</span>
                     <span className="text-xl font-bold font-mono tracking-tight block mt-1">{item.vencimiento}</span>
@@ -1223,7 +1225,7 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                 <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Datos de la Contratación</span>
                 <div>
                   <label className="block text-xs font-medium mb-1.5">Sueldo Bruto Acordado</label>
@@ -1268,7 +1270,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className={`p-3.5 rounded-lg border text-xs space-y-1.5 ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                <div className={`p-3.5 rounded-lg border text-xs space-y-1.5 ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                   <p className="font-semibold text-zinc-300">Beneficios según ley:</p>
                   <p className="opacity-80">
                     {regimenEmpresa === 'micro' && '• Microempresa REMYPE: 15 días de vacaciones. No tiene CTS ni Gratificaciones de julio/diciembre.'}
@@ -1278,10 +1280,10 @@ export default function App() {
                 </div>
               </div>
 
-              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard} glass-card`}>
                 <div className="space-y-3">
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Provisión Mensual de Sobrecostos</span>
-                  <div className={`p-3.5 rounded-lg border space-y-1.5 text-xs ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className={`p-3.5 rounded-lg border space-y-1.5 text-xs ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                     <div className="flex justify-between">
                       <span className="opacity-70">Sueldo pactado con el trabajador:</span>
                       <span className="font-mono">S/ {formatearMoneda(sEmp)}</span>
@@ -1304,7 +1306,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
+                  <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900/90 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
                     <div>
                       <span className="text-[11px] font-medium uppercase tracking-wider block opacity-70">Costo Total Mensual para la Empresa</span>
                       <span className="text-2xl font-bold">S/ {formatearMoneda(costoTotalMensual)}</span>
@@ -1367,7 +1369,7 @@ export default function App() {
 
             {sunatSubTab === 'igv' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Cálculo Bidireccional</span>
                   <div>
                     <label className="block text-xs font-medium mb-1.5">Subtotal (Base Imponible)</label>
@@ -1397,7 +1399,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard}`}>
+                <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard} glass-card`}>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center border-b pb-2 border-zinc-800">
                       <span className="text-xs font-medium">Resumen Desglosado</span>
@@ -1419,7 +1421,7 @@ export default function App() {
                       </button>
                     </div>
 
-                    <div className={`p-3.5 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className={`p-3.5 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                       <div>
                         <span className="text-[11px] text-zinc-400 block">Base Imponible</span>
                         <span className="text-lg font-semibold">S/ {formatearMoneda(subtotalNum)}</span>
@@ -1428,7 +1430,7 @@ export default function App() {
                         {copiedItem === 'c_sub' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
-                    <div className={`p-3.5 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className={`p-3.5 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                       <div>
                         <span className="text-[11px] text-zinc-400 block">IGV (18.00%)</span>
                         <span className="text-lg font-semibold">S/ {formatearMoneda(igvCalculado)}</span>
@@ -1437,7 +1439,7 @@ export default function App() {
                         {copiedItem === 'c_igv' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
-                    <div className={`p-4 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-900 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
+                    <div className={`p-4 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-900/90 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
                       <div>
                         <span className="text-[11px] font-medium uppercase tracking-wider block opacity-70">Total Facturado</span>
                         <span className="text-2xl font-bold">S/ {formatearMoneda(totalNum)}</span>
@@ -1446,7 +1448,7 @@ export default function App() {
                         {copiedItem === 'c_tot' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
-                    <div className={`p-3 rounded-lg border space-y-1 ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className={`p-3 rounded-lg border space-y-1 ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                       <p className={`text-xs font-mono leading-relaxed p-2 rounded ${isDark ? 'bg-zinc-900/60' : 'bg-white border'}`}>{totalEnLetras}</p>
                     </div>
                   </div>
@@ -1456,7 +1458,7 @@ export default function App() {
 
             {sunatSubTab === 'spot' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Configuración SPOT</span>
                   <div>
                     <label className="block text-xs font-medium mb-1.5">Total de Factura (con IGV)</label>
@@ -1486,9 +1488,9 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Desglose de Pago</span>
-                  <div className={`p-4 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className={`p-4 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                     <div>
                       <span className="text-[11px] text-zinc-400 block">1. Depósito Banco de la Nación (Detracción)</span>
                       <span className="text-xl font-bold">S/ {formatearMoneda(montoDetraccion)}</span>
@@ -1497,7 +1499,7 @@ export default function App() {
                       {copiedItem === 'c_spot' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
                   </div>
-                  <div className={`p-4 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-900 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
+                  <div className={`p-4 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-900/90 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
                     <div>
                       <span className="text-[11px] text-zinc-400 block">2. Saldo a Pagar al Proveedor</span>
                       <span className="text-xl font-bold">S/ {formatearMoneda(netoPagarProveedor)}</span>
@@ -1512,7 +1514,7 @@ export default function App() {
 
             {sunatSubTab === 'retencion' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Régimen de Retenciones (3%)</span>
                   <div>
                     <label className="block text-xs font-medium mb-1.5">Importe Total de Factura</label>
@@ -1527,9 +1529,9 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-3 ${bgCard}`}>
+                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-3 ${bgCard} glass-card`}>
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Comprobante de Retención</span>
-                  <div className={`p-3.5 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className={`p-3.5 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                     <div>
                       <span className="text-[11px] text-zinc-400 block">Retención (3%)</span>
                       <span className="text-lg font-semibold">S/ {formatearMoneda(montoRetencion)}</span>
@@ -1538,7 +1540,7 @@ export default function App() {
                       {copiedItem === 'c_ret' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
                   </div>
-                  <div className={`p-4 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-900 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
+                  <div className={`p-4 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-900/90 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
                     <div>
                       <span className="text-[11px] text-zinc-400 block">Monto Neto a Cobrar</span>
                       <span className="text-xl font-bold">S/ {formatearMoneda(netoPagarRetencion)}</span>
@@ -1553,7 +1555,7 @@ export default function App() {
 
             {sunatSubTab === 'cuarta' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Recibo por Honorarios</span>
                   <div>
                     <label className="block text-xs font-medium mb-1.5">Honorario Bruto Pactado</label>
@@ -1577,9 +1579,9 @@ export default function App() {
                     <span>Tengo constancia de <strong>Suspensión de 4ta (Formulario 1609)</strong></span>
                   </label>
                 </div>
-                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-3 ${bgCard}`}>
+                <div className={`lg:col-span-6 border rounded-xl p-5 space-y-3 ${bgCard} glass-card`}>
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Liquidación</span>
-                  <div className={`p-3.5 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className={`p-3.5 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                     <div>
                       <span className="text-[11px] text-zinc-400 block">Retención Renta (8%)</span>
                       <span className="text-lg font-semibold">S/ {formatearMoneda(montoRetencionCuarta)}</span>
@@ -1588,7 +1590,7 @@ export default function App() {
                       {copiedItem === 'c_4ta' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
                   </div>
-                  <div className={`p-4 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-900 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
+                  <div className={`p-4 rounded-lg border flex justify-between items-center ${isDark ? 'bg-zinc-900/90 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
                     <div>
                       <span className="text-[11px] text-zinc-400 block">Neto a Percibir</span>
                       <span className="text-xl font-bold">S/ {formatearMoneda(netoCobrarCuarta)}</span>
@@ -1615,7 +1617,7 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className={`p-4 rounded-xl border space-y-3 ${bgCard}`}>
+              <div className={`p-4 rounded-xl border space-y-3 ${bgCard} glass-card`}>
                 <span className="text-xs font-medium block">1. Propósito de la consulta</span>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -1652,7 +1654,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className={`p-4 rounded-xl border space-y-3 ${bgCard}`}>
+              <div className={`p-4 rounded-xl border space-y-3 ${bgCard} glass-card`}>
                 <span className="text-xs font-medium block">2. Tipo de operación</span>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -1687,7 +1689,7 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className={`lg:col-span-7 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-7 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                 <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Conversor Bidireccional</span>
                 <div>
                   <label className="block text-xs font-medium mb-1.5">Dólares (USD)</label>
@@ -1717,15 +1719,15 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className={`p-3 rounded-lg border space-y-1 ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                <div className={`p-3 rounded-lg border space-y-1 ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                   <p className="text-xs font-mono">{totalEnLetrasPEN}</p>
                 </div>
               </div>
 
-              <div className={`lg:col-span-5 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-5 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard} glass-card`}>
                 <div className="space-y-3">
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Comparativa de Spread Bancario</span>
-                  <div className={`p-3.5 rounded-lg border text-xs space-y-2 ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className={`p-3.5 rounded-lg border text-xs space-y-2 ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                     <div className="flex justify-between pb-1 border-b border-zinc-800 text-zinc-400">
                       <span>Entidad</span>
                       <span>Compra</span>
@@ -1758,7 +1760,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className={`p-4 rounded-lg border ${isDark ? 'bg-zinc-900 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
+                  <div className={`p-4 rounded-lg border ${isDark ? 'bg-zinc-900/90 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
                     <span className="text-[11px] block mb-1 opacity-70">Ahorro estimado frente al banco:</span>
                     <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 block">+ S/ {formatearMoneda(ahorroEstimadoBcp)}</span>
                   </div>
@@ -1780,7 +1782,7 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                 <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Datos de la Propiedad</span>
                 <div>
                   <label className="block text-xs font-medium mb-1.5">Valor de Transferencia del Inmueble</label>
@@ -1794,7 +1796,7 @@ export default function App() {
                     />
                   </div>
                 </div>
-                <div className={`p-3.5 rounded-lg border text-xs space-y-2 ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                <div className={`p-3.5 rounded-lg border text-xs space-y-2 ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                   <div className="flex justify-between">
                     <span className="opacity-70">Tramo inafecto legal (10 UIT):</span>
                     <span className="font-mono font-semibold">S/ {formatearMoneda(deducc10Uit)}</span>
@@ -1802,17 +1804,17 @@ export default function App() {
                 </div>
               </div>
 
-              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard} glass-card`}>
                 <div className="space-y-3">
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Liquidación de Alcabala</span>
-                  <div className={`p-3.5 rounded-lg border space-y-1.5 text-xs ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className={`p-3.5 rounded-lg border space-y-1.5 text-xs ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                     <div className="flex justify-between">
                       <span className="opacity-70">Base imponible gravada (saldo):</span>
                       <span className="font-mono">S/ {formatearMoneda(baseAfectaAlcabala)}</span>
                     </div>
                   </div>
 
-                  <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
+                  <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900/90 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
                     <div>
                       <span className="text-[11px] font-medium uppercase tracking-wider block opacity-70">Monto de Alcabala a Pagar</span>
                       <span className="text-2xl font-bold">S/ {formatearMoneda(impuestoAlcabala)}</span>
@@ -1842,7 +1844,7 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                 <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Condiciones del Crédito</span>
                 <div>
                   <label className="block text-xs font-medium mb-1.5">Monto del Préstamo</label>
@@ -1880,10 +1882,10 @@ export default function App() {
                 </div>
               </div>
 
-              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard} glass-card`}>
                 <div className="space-y-3">
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Resultado</span>
-                  <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
+                  <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900/90 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
                     <div>
                       <span className="text-[11px] font-medium uppercase tracking-wider block opacity-70">Cuota Fija Mensual</span>
                       <span className="text-2xl font-bold">S/ {formatearMoneda(cuotaMensual)}</span>
@@ -1896,7 +1898,7 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div className={`p-3.5 rounded-lg border space-y-1.5 text-xs ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className={`p-3.5 rounded-lg border space-y-1.5 text-xs ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                     <div className="flex justify-between">
                       <span className="opacity-70">Intereses Totales a Pagar:</span>
                       <span className="font-mono text-rose-500 font-semibold">+ S/ {formatearMoneda(totalInteresesPrestamo)}</span>
@@ -1920,7 +1922,7 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                 <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Datos de la Relación Laboral</span>
                 <div>
                   <label className="block text-xs font-medium mb-1.5">Último Sueldo Básico</label>
@@ -1958,10 +1960,10 @@ export default function App() {
                 </div>
               </div>
 
-              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard} glass-card`}>
                 <div className="space-y-3">
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Desglose</span>
-                  <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
+                  <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900/90 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
                     <div>
                       <span className="text-[11px] font-medium uppercase tracking-wider block opacity-70">Total Liquidación a Cobrar</span>
                       <span className="text-2xl font-bold">S/ {formatearMoneda(totalLiquidacion)}</span>
@@ -1991,7 +1993,7 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                 <div>
                   <label className="block text-xs font-medium mb-1.5">Sueldo Bruto Mensual</label>
                   <div className="relative">
@@ -2006,8 +2008,8 @@ export default function App() {
                 </div>
               </div>
 
-              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard}`}>
-                <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard} glass-card`}>
+                <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900/90 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
                   <div>
                     <span className="text-[11px] font-medium uppercase tracking-wider block opacity-70">Sueldo Neto a Percibir</span>
                     <span className="text-2xl font-bold">S/ {formatearMoneda(sueldoNetoRecibir)}</span>
@@ -2035,7 +2037,7 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                 <div>
                   <label className="block text-xs font-medium mb-1.5">Sueldo Básico Mensual</label>
                   <div className="relative">
@@ -2050,8 +2052,8 @@ export default function App() {
                 </div>
               </div>
 
-              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard}`}>
-                <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard} glass-card`}>
+                <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900/90 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
                   <div>
                     <span className="text-[11px] font-medium uppercase tracking-wider block opacity-70">
                       {laboralTab === 'grati' ? 'Total Gratificación' : 'Total CTS'}
@@ -2083,7 +2085,7 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                 <div>
                   <label className="block text-xs font-medium mb-1.5">Monto del Tributo Omitido</label>
                   <div className="relative">
@@ -2098,8 +2100,8 @@ export default function App() {
                 </div>
               </div>
 
-              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard}`}>
-                <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
+              <div className={`lg:col-span-6 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard} glass-card`}>
+                <div className={`p-4 rounded-lg border flex items-center justify-between ${isDark ? 'bg-zinc-900/90 border-zinc-700/80' : 'bg-slate-100 border-slate-300'}`}>
                   <div>
                     <span className="text-[11px] font-medium uppercase tracking-wider block opacity-70">Total Actualizado a Pagar</span>
                     <span className="text-2xl font-bold">S/ {formatearMoneda(deudaTotalPagar)}</span>
@@ -2128,7 +2130,7 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className={`lg:col-span-5 border rounded-xl p-5 space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-5 border rounded-xl p-5 space-y-4 ${bgCard} glass-card`}>
                 <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Búsqueda de Contribuyente</span>
                 <div>
                   <label className="block text-xs font-medium mb-1.5">Número de RUC (11 dígitos) o DNI (8 dígitos)</label>
@@ -2146,7 +2148,7 @@ export default function App() {
                 </div>
 
                 {esDniOchoDigitos && (
-                  <div className={`p-3 rounded-lg border text-xs space-y-2 ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-blue-50 border-blue-200'}`}>
+                  <div className={`p-3 rounded-lg border text-xs space-y-2 ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-blue-50 border-blue-200'}`}>
                     <div className="flex items-center gap-1.5 font-semibold text-blue-500">
                       <Sparkles className="w-4 h-4" />
                       <span>¿Deseas calcular el RUC 10 de este DNI?</span>
@@ -2225,7 +2227,7 @@ export default function App() {
               </div>
 
               {/* FICHA RUC */}
-              <div className={`lg:col-span-7 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard}`}>
+              <div className={`lg:col-span-7 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard} glass-card`}>
                 <div className="space-y-3">
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Ficha del Contribuyente</span>
 
@@ -2242,7 +2244,7 @@ export default function App() {
                   </div>
 
                   {rucDataResult ? (
-                    <div className={`p-4 rounded-lg border space-y-2.5 text-xs ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className={`p-4 rounded-lg border space-y-2.5 text-xs ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                       <div>
                         <span className="text-[11px] text-zinc-500 block">Razón Social / Nombre:</span>
                         <span className="font-bold text-sm tracking-tight">{rucDataResult.razonSocial}</span>
@@ -2299,7 +2301,7 @@ export default function App() {
       </main>
 
       {/* FOOTER */}
-      <footer className={`border-t py-6 text-center text-xs space-y-3 ${isDark ? 'border-zinc-800/80 bg-zinc-950 text-zinc-500' : 'border-slate-200 bg-white text-slate-500'}`}>
+      <footer className={`border-t py-6 text-center text-xs space-y-3 ${isDark ? 'border-zinc-800/80 bg-zinc-950/80 text-zinc-500' : 'border-slate-200 bg-white/80 text-slate-500'}`}>
         <p className="font-medium text-zinc-400">
           Todo en Uno Perú © 2026 — Plataforma libre de utilidades tributarias, laborales y financieras.
         </p>
