@@ -836,10 +836,11 @@ export default function App() {
           </div>
         </div>
       )}
-
+      
       {/* HEADER */}
       <header className={`border-b ${borderHeader} backdrop-blur sticky top-0 z-40`}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+          {/* ISOLOGO OFICIAL ÚNICO */}
           <div
             onClick={() => {
               navigateTo('home');
@@ -847,20 +848,36 @@ export default function App() {
             }}
             className="flex items-center gap-3 cursor-pointer group flex-shrink-0"
           >
-            <div className={`w-9 h-9 rounded-lg ${isDark ? 'bg-zinc-100 text-zinc-950' : 'bg-slate-900 text-white'} flex items-center justify-center font-bold text-sm tracking-tight group-hover:scale-105 transition-transform`}>
-              T1
+            {/* Isotipo T1 con punto rojo Perú */}
+            <div className="relative w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-700/80 flex items-center justify-center group-hover:scale-105 transition-all shadow-sm">
+              <span className="font-mono font-black text-white text-base tracking-tighter">
+                T<span className="text-zinc-300">1</span>
+              </span>
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-600 ring-2 ring-zinc-950"></span>
             </div>
+
+            {/* Texto de Marca y Tag PE */}
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold text-sm tracking-tight">Todo en Uno</span>
-                <span className={`text-[10px] font-mono tracking-wider ${isDark ? 'bg-zinc-800 text-zinc-400 border-zinc-700/60' : 'bg-slate-200 text-slate-700 border-slate-300'} border px-1.5 py-0.2 rounded`}>
+                <span className={`font-extrabold text-sm tracking-tight ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
+                  Todo en Uno
+                </span>
+                <span className={`text-[10px] font-mono font-bold tracking-wider px-1.5 py-0.5 rounded border flex items-center gap-1 ${
+                  isDark
+                    ? 'bg-zinc-900 text-zinc-300 border-zinc-700'
+                    : 'bg-slate-100 text-slate-800 border-slate-300'
+                }`}>
                   PE
+                  <span className="w-1 h-2 rounded-sm bg-red-600"></span>
                 </span>
               </div>
-              <p className={`text-[11px] ${isDark ? 'text-zinc-400' : 'text-slate-500'} hidden sm:block`}>Herramientas esenciales del Perú</p>
+              <p className={`text-[10px] uppercase tracking-wider font-semibold ${isDark ? 'text-zinc-400' : 'text-slate-500'} hidden sm:block`}>
+                Herramientas &amp; Finanzas
+              </p>
             </div>
           </div>
 
+          {/* BUSCADOR */}
           <div className="flex-1 max-w-md relative hidden md:block">
             <Search className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-zinc-500' : 'text-slate-400'}`} />
             <input
@@ -880,6 +897,7 @@ export default function App() {
             )}
           </div>
 
+          {/* ACCIONES Y TEMA */}
           <div className="flex items-center gap-2">
             {activeModule !== 'home' && (
               <>
