@@ -34,13 +34,20 @@ import {
   Download,
   ChevronDown,
   Eye,
+  EyeOff,
+  Star,
+  Maximize2,
+  Minimize2,
   Clock,
   FileText,
   PiggyBank,
   Utensils,
 } from 'lucide-react';
 
-// Módulos independientes
+// Componentes y utilidades independientes
+import CommandPalette from './components/CommandPalette';
+import TickerBar from './components/TickerBar';
+import QuickCalculator from './components/QuickCalculator';
 import HorasExtrasModule from './modules/HorasExtrasModule';
 import RegimenTributarioModule from './modules/RegimenTributarioModule';
 import UtilidadesModule from './modules/UtilidadesModule';
@@ -277,6 +284,18 @@ export default function App() {
   const [showGuide, setShowGuide] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
+  // Estados de Productividad, UX y Modo Zen
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [isPrivacyMode, setIsPrivacyMode] = useState(false);
+  const [isZenMode, setIsZenMode] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('todoenuno_favorites') || '["sunat", "cambio"]');
+    } catch {
+      return ['sunat', 'cambio'];
+    }
+  });
+
   // Estados del Voucher y Descargas
   const voucherRef = useRef<HTMLDivElement>(null);
   const [showTicketModal, setShowTicketModal] = useState<boolean>(false);
@@ -304,6 +323,14 @@ export default function App() {
     setTimeout(() => setToastMsg(null), 3000);
   };
 
+  const toggleFavorite = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = favorites.includes(id) ? favorites.filter((f) => f !== id) : [...favorites, id];
+    setFavorites(next);
+    localStorage.setItem('todoenuno_favorites', JSON.stringify(next));
+    showToast(favorites.includes(id) ? 'Removido de favoritos' : 'Añadido a favoritos');
+  };
+
   const addHistoryItem = (modulo: string, detalle: string) => {
     const nuevo = {
       id: Date.now().toString(),
@@ -321,13 +348,10 @@ export default function App() {
     localStorage.removeItem('todoenuno_historial');
   };
 
-  // NAVEGACIÓN FLUIDA EN EL PRIMER CLIC (SIN REBOTE)
+  // NAVEGACIÓN FLUIDA EN EL PRIMER CLIC (SIN REBOTES NI DELAY)
   const navigateTo = (mod: ModuleType) => {
     setActiveModule(mod);
-    const newUrl = mod === 'home' 
-      ? window.location.pathname 
-      : `${window.location.pathname}#${mod}`;
-    
+    const newUrl = mod === 'home' ? window.location.pathname : `${window.location.pathname}#${mod}`;
     window.history.pushState(null, '', newUrl);
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
@@ -347,8 +371,13 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (showLegalModal) setShowLegalModal(false);
+      // Atajo Cmd + K / Ctrl + K para paleta de comandos
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandOpen((prev) => !prev);
+      } else if (e.key === 'Escape') {
+        if (isCommandOpen) setIsCommandOpen(false);
+        else if (showLegalModal) setShowLegalModal(false);
         else if (showTicketModal) {
           setShowTicketModal(false);
           setShowDownloadMenu(false);
@@ -362,7 +391,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showTicketModal, showLegalModal]);
+  }, [showTicketModal, showLegalModal, isCommandOpen]);
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
@@ -381,9 +410,10 @@ export default function App() {
     if (!voucherRef.current) return;
     setShowDownloadMenu(false);
     try {
-      const dataUrl = formato === 'png'
-        ? await htmlToImage.toPng(voucherRef.current, { pixelRatio: 2, backgroundColor: '#ffffff' })
-        : await htmlToImage.toJpeg(voucherRef.current, { pixelRatio: 2, quality: 0.95, backgroundColor: '#ffffff' });
+      const dataUrl =
+        formato === 'png'
+          ? await htmlToImage.toPng(voucherRef.current, { pixelRatio: 2, backgroundColor: '#ffffff' })
+          : await htmlToImage.toJpeg(voucherRef.current, { pixelRatio: 2, quality: 0.95, backgroundColor: '#ffffff' });
 
       const link = document.createElement('a');
       link.download = `comprobante-todoenuno.${formato}`;
@@ -406,7 +436,7 @@ export default function App() {
   const generarTextoWhatsapp = () => {
     if (!ticketData) return '';
     const separador = '--------------------------------';
-    const lineas = ticketData.filas.map(f => `${f.label}: ${f.valor}`).join('\n');
+    const lineas = ticketData.filas.map((f) => `${f.label}: ${f.valor}`).join('\n');
     return `*TODO EN UNO PERU*\nComprobante de Calculo Oficial\n${separador}\n*${ticketData.titulo.toUpperCase()}*\n${lineas}\n${separador}\n*TOTAL: ${ticketData.total}*\n_${ticketData.letras}_\n${separador}\nVerificado en: todoenuno.pe`;
   };
 
@@ -519,7 +549,7 @@ export default function App() {
       setSubtotalInput(sub);
       addHistoryItem('IGV', `Total S/ ${num.toFixed(2)} → Subtotal S/ ${sub}`);
     } else {
-      setSubtotalInput('');
+      setTotalInput('');
     }
   };
 
@@ -970,13 +1000,23 @@ export default function App() {
     },
   ];
 
+  // Ordenar priorizando favoritos en el inicio
   const filteredModules = useMemo(() => {
-    if (!searchTerm.trim()) return modulesList;
-    const term = searchTerm.toLowerCase();
-    return modulesList.filter(
-      (m) => m.title.toLowerCase().includes(term) || m.desc.toLowerCase().includes(term) || m.tag.toLowerCase().includes(term)
-    );
-  }, [searchTerm]);
+    let list = modulesList;
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      list = modulesList.filter(
+        (m) => m.title.toLowerCase().includes(term) || m.desc.toLowerCase().includes(term) || m.tag.toLowerCase().includes(term)
+      );
+    }
+    return [...list].sort((a, b) => {
+      const aFav = favorites.includes(a.id);
+      const bFav = favorites.includes(b.id);
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+      return 0;
+    });
+  }, [searchTerm, favorites]);
 
   const isDark = theme === 'dark';
   const bgMain = isDark
@@ -1002,6 +1042,9 @@ export default function App() {
           <span>{toastMsg}</span>
         </div>
       )}
+
+      {/* Ticker informativo superior (visible si no está en modo Zen) */}
+      {!isZenMode && <TickerBar isDark={isDark} onNavigateToCronograma={() => navigateTo('cronograma')} />}
 
       {/* MODAL DE VOUCHER INTERACTIVO */}
       {showTicketModal && ticketData && (
@@ -1165,102 +1208,148 @@ export default function App() {
         </div>
       )}
 
-      {/* HEADER ÚNICO FIJO */}
-      <header className={`border-b ${borderHeader} backdrop-blur sticky top-0 z-40`}>
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <div
-            onClick={() => {
-              navigateTo('home');
-              setShowGuide(false);
-            }}
-            className="flex items-center gap-3 cursor-pointer group flex-shrink-0"
-          >
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-zinc-900 to-zinc-700 border border-zinc-700/80 flex items-center justify-center group-hover:scale-105 transition-all shadow-md">
-              <span className="font-mono font-black text-white text-base tracking-tighter">
-                T<span className="text-zinc-300">1</span>
-              </span>
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-600 ring-2 ring-white dark:ring-zinc-950 animate-pulse"></span>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className={`font-extrabold text-sm tracking-tight ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
-                  Todo en Uno
+      {/* HEADER ÚNICO FIJO (Ocultable en Modo Zen) */}
+      {!isZenMode && (
+        <header className={`border-b ${borderHeader} backdrop-blur sticky top-0 z-40`}>
+          <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+            <div
+              onClick={() => {
+                navigateTo('home');
+                setShowGuide(false);
+              }}
+              className="flex items-center gap-3 cursor-pointer group flex-shrink-0"
+            >
+              <div className="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-zinc-900 to-zinc-700 border border-zinc-700/80 flex items-center justify-center group-hover:scale-105 transition-all shadow-md">
+                <span className="font-mono font-black text-white text-base tracking-tighter">
+                  T<span className="text-zinc-300">1</span>
                 </span>
-                <span className="text-[10px] font-mono font-bold tracking-wider px-1.5 py-0.5 rounded border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center gap-1">
-                  PE
-                  <span className="w-1 h-2 rounded-sm bg-red-600"></span>
-                </span>
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-600 ring-2 ring-white dark:ring-zinc-950 animate-pulse"></span>
               </div>
-              <p className={`text-[10px] uppercase tracking-wider font-semibold ${isDark ? 'text-zinc-400' : 'text-slate-500'} hidden sm:block`}>
-                Herramientas &amp; Finanzas Perú
-              </p>
+
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className={`font-extrabold text-sm tracking-tight ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
+                    Todo en Uno
+                  </span>
+                  <span className="text-[10px] font-mono font-bold tracking-wider px-1.5 py-0.5 rounded border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center gap-1">
+                    PE
+                    <span className="w-1 h-2 rounded-sm bg-red-600"></span>
+                  </span>
+                </div>
+                <p className={`text-[10px] uppercase tracking-wider font-semibold ${isDark ? 'text-zinc-400' : 'text-slate-500'} hidden sm:block`}>
+                  Herramientas &amp; Finanzas Perú
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex-1 max-w-md relative hidden md:block">
-            <Search className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-zinc-500' : 'text-slate-400'}`} />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar calculadora (IGV, cronograma, préstamo, ruc...)"
-              className={`w-full rounded-lg pl-9 pr-4 py-2 text-xs focus:outline-none border transition-colors ${
-                isDark ? 'bg-zinc-900 border-zinc-800 focus:border-zinc-600 text-zinc-200 placeholder-zinc-500' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-800 placeholder-slate-400'
-              }`}
-            />
-            {searchTerm && (
-              <button onClick={() => setSearchTerm('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs opacity-60 hover:opacity-100">
-                ✕
+            {/* Buscador de cabecera con acceso directo a paleta Cmd+K */}
+            <div
+              onClick={() => setIsCommandOpen(true)}
+              className="flex-1 max-w-md relative hidden md:flex items-center cursor-pointer"
+            >
+              <Search className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-zinc-500' : 'text-slate-400'}`} />
+              <input
+                ref={searchInputRef}
+                type="text"
+                readOnly
+                placeholder="Buscar o presiona ⌘K para saltar rápido"
+                className={`w-full rounded-lg pl-9 pr-14 py-2 text-xs focus:outline-none border transition-colors cursor-pointer ${
+                  isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-slate-50 border-slate-300 text-slate-700'
+                }`}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border border-slate-300 dark:border-zinc-700 text-slate-500 dark:text-zinc-400">
+                ⌘K
+              </span>
+            </div>
+
+            {/* Acciones principales del Header */}
+            <div className="flex items-center gap-2">
+              {activeModule !== 'home' && (
+                <>
+                  <button
+                    onClick={() => setShowGuide(!showGuide)}
+                    className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border transition-colors btn-press-effect ${
+                      showGuide
+                        ? isDark ? 'bg-zinc-200 text-zinc-950 font-semibold' : 'bg-slate-900 text-white font-semibold'
+                        : isDark ? 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-300' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
+                    }`}
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{showGuide ? 'Ocultar Guía' : '¿Cómo llenar?'}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigateTo('home');
+                      setShowGuide(false);
+                    }}
+                    className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border transition-colors btn-press-effect ${
+                      isDark ? 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-400 hover:text-zinc-200' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
+                    }`}
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Inicio</span>
+                  </button>
+                </>
+              )}
+
+              {/* Modo Privacidad (Privacy Blur) */}
+              <button
+                onClick={() => {
+                  setIsPrivacyMode(!isPrivacyMode);
+                  showToast(isPrivacyMode ? 'Modo privacidad desactivado' : 'Modo privacidad activo (cifras borrosas)');
+                }}
+                title={isPrivacyMode ? 'Desactivar modo privacidad' : 'Activar modo privacidad (ocultar montos)'}
+                className={`p-2 rounded-lg border transition-colors btn-press-effect ${
+                  isPrivacyMode
+                    ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
+                    : isDark ? 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-300' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
+                }`}
+              >
+                {isPrivacyMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
-            )}
-          </div>
 
-          <div className="flex items-center gap-2">
-            {activeModule !== 'home' && (
-              <>
+              {/* Modo Zen (Pantalla Completa) */}
+              {activeModule !== 'home' && (
                 <button
-                  onClick={() => setShowGuide(!showGuide)}
-                  className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border transition-colors btn-press-effect ${
-                    showGuide
-                      ? isDark ? 'bg-zinc-200 text-zinc-950 font-semibold' : 'bg-slate-900 text-white font-semibold'
+                  onClick={() => setIsZenMode(!isZenMode)}
+                  title="Modo Zen: Ocultar encabezados para máxima concentración"
+                  className={`p-2 rounded-lg border transition-colors btn-press-effect ${
+                    isZenMode
+                      ? 'bg-blue-600 text-white border-blue-600'
                       : isDark ? 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-300' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
                   }`}
                 >
-                  <HelpCircle className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{showGuide ? 'Ocultar Guía' : '¿Cómo llenar?'}</span>
+                  <Maximize2 className="w-4 h-4" />
                 </button>
-                <button
-                  onClick={() => {
-                    navigateTo('home');
-                    setShowGuide(false);
-                  }}
-                  className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border transition-colors btn-press-effect ${
-                    isDark ? 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-400 hover:text-zinc-200' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
-                  }`}
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Inicio</span>
-                </button>
-              </>
-            )}
+              )}
 
-            <button
-              onClick={toggleTheme}
-              aria-label="Cambiar tema"
-              className={`p-2 rounded-lg border transition-colors btn-press-effect ${
-                isDark ? 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-300' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
-              }`}
-            >
-              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
-            </button>
+              {/* Botón Cambio de Tema */}
+              <button
+                onClick={toggleTheme}
+                aria-label="Cambiar tema"
+                className={`p-2 rounded-lg border transition-colors btn-press-effect ${
+                  isDark ? 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-300' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
+                }`}
+              >
+                {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
-      {/* CONTENIDO PRINCIPAL */}
-      <main key={activeModule} className="flex-1 max-w-6xl w-full mx-auto px-4 py-8 anim-fade-in-up">
+      {/* Botón flotante para restaurar del modo Zen */}
+      {isZenMode && (
+        <button
+          onClick={() => setIsZenMode(false)}
+          className="fixed top-4 right-4 z-50 p-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xl flex items-center gap-1.5 text-xs font-bold btn-press-effect"
+        >
+          <Minimize2 className="w-4 h-4" /> Salir de Modo Zen
+        </button>
+      )}
+
+      {/* CONTENIDO PRINCIPAL (Con clase condicional de Privacidad) */}
+      <main key={activeModule} className={`flex-1 max-w-6xl w-full mx-auto px-4 py-8 anim-fade-in-up ${isPrivacyMode ? 'privacy-active' : ''}`}>
         {/* PANTALLA PRINCIPAL CON TARJETAS CROMÁTICAS */}
         {activeModule === 'home' && (
           <div className="space-y-8">
@@ -1286,21 +1375,31 @@ export default function App() {
               />
             </div>
 
-            {/* GRILLA DE TARJETAS CON COLOR Y CONTRASTE EN MODO CLARO */}
+            {/* GRILLA DE TARJETAS CON FAVORITOS ANCLADOS Y CONTRASTE EN MODO CLARO */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredModules.map((item) => {
                 const IconComp = item.icon;
+                const isFav = favorites.includes(item.id);
                 return (
                   <div
                     key={item.id}
                     onClick={() => navigateTo(item.id)}
-                    className={`group rounded-xl p-5 border transition-all cursor-pointer flex flex-col justify-between card-hover-effect glass-card ${
+                    className={`group rounded-xl p-5 border transition-all cursor-pointer flex flex-col justify-between card-hover-effect glass-card relative ${
                       isDark ? 'bg-zinc-900/70 border-zinc-800' : 'bg-white border-slate-200/90 shadow-sm hover:shadow-md'
                     }`}
                   >
+                    {/* Botón de Estrella para Favoritos */}
+                    <button
+                      onClick={(e) => toggleFavorite(item.id, e)}
+                      title={isFav ? 'Quitar de favoritos' : 'Fijar en favoritos'}
+                      className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors z-10"
+                    >
+                      <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`} />
+                    </button>
+
                     <div>
-                      <div className="flex items-center justify-between mb-3.5">
-                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center border icon-bounce shadow-xs ${
+                      <div className="flex items-center gap-3 mb-3.5 pr-8">
+                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center border icon-bounce shadow-xs flex-shrink-0 ${
                           isDark ? item.themeDark : item.themeLight
                         }`}>
                           <IconComp className="w-5 h-5" />
@@ -2544,38 +2643,57 @@ export default function App() {
         )}
       </main>
 
-      {/* FOOTER */}
-      <footer className={`border-t py-6 text-center text-xs space-y-3 ${isDark ? 'border-zinc-800/80 bg-zinc-950/80 text-zinc-500' : 'border-slate-200 bg-white/90 text-slate-600'}`}>
-        <p className="font-semibold text-slate-700 dark:text-zinc-400">
-          Todo en Uno Perú © 2026 — Plataforma libre de utilidades tributarias, laborales y financieras.
-        </p>
-        <p className="text-[11px] max-w-xl mx-auto opacity-80 leading-relaxed px-4">
-          🔒 <strong>Privacidad Garantizada:</strong> Todos los cálculos se procesan de forma 100% local en tu navegador. Tus montos, sueldos y facturas nunca se envían ni almacenan en servidores externos.
-        </p>
-        
-        <div className="flex justify-center items-center gap-4 text-[11px] pt-1 font-medium">
-          <button
-            onClick={() => { setLegalTab('terminos'); setShowLegalModal(true); }}
-            className="hover:underline hover:text-blue-600 dark:hover:text-zinc-300 transition-colors btn-press-effect"
-          >
-            Términos y Condiciones
-          </button>
-          <span>•</span>
-          <button
-            onClick={() => { setLegalTab('privacidad'); setShowLegalModal(true); }}
-            className="hover:underline hover:text-blue-600 dark:hover:text-zinc-300 transition-colors btn-press-effect"
-          >
-            Política de Privacidad
-          </button>
-          <span>•</span>
-          <button
-            onClick={() => { setLegalTab('deslinde'); setShowLegalModal(true); }}
-            className="hover:underline hover:text-blue-600 dark:hover:text-zinc-300 transition-colors btn-press-effect"
-          >
-            Deslinde de Responsabilidad
-          </button>
-        </div>
-      </footer>
+      {/* FOOTER (Ocultable en Modo Zen) */}
+      {!isZenMode && (
+        <footer className={`border-t py-6 text-center text-xs space-y-3 ${isDark ? 'border-zinc-800/80 bg-zinc-950/80 text-zinc-500' : 'border-slate-200 bg-white/90 text-slate-600'}`}>
+          <p className="font-semibold text-slate-700 dark:text-zinc-400">
+            Todo en Uno Perú © 2026 — Plataforma libre de utilidades tributarias, laborales y financieras.
+          </p>
+          <p className="text-[11px] max-w-xl mx-auto opacity-80 leading-relaxed px-4">
+            🔒 <strong>Privacidad Garantizada:</strong> Todos los cálculos se procesan de forma 100% local en tu navegador. Tus montos, sueldos y facturas nunca se envían ni almacenan en servidores externos.
+          </p>
+          
+          <div className="flex justify-center items-center gap-4 text-[11px] pt-1 font-medium">
+            <button
+              onClick={() => { setLegalTab('terminos'); setShowLegalModal(true); }}
+              className="hover:underline hover:text-blue-600 dark:hover:text-zinc-300 transition-colors btn-press-effect"
+            >
+              Términos y Condiciones
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => { setLegalTab('privacidad'); setShowLegalModal(true); }}
+              className="hover:underline hover:text-blue-600 dark:hover:text-zinc-300 transition-colors btn-press-effect"
+            >
+              Política de Privacidad
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => { setLegalTab('deslinde'); setShowLegalModal(true); }}
+              className="hover:underline hover:text-blue-600 dark:hover:text-zinc-300 transition-colors btn-press-effect"
+            >
+              Deslinde de Responsabilidad
+            </button>
+          </div>
+        </footer>
+      )}
+
+      {/* PALETA DE COMANDOS FLOTANTE (Cmd + K) */}
+      <CommandPalette
+        isOpen={isCommandOpen}
+        onClose={() => setIsCommandOpen(false)}
+        modules={modulesList}
+        onSelectModule={(id) => navigateTo(id as ModuleType)}
+        isDark={isDark}
+      />
+
+      {/* MINI CALCULADORA ARITMÉTICA FLOTANTE */}
+      <QuickCalculator
+        isDark={isDark}
+        onCopyResult={(val) => {
+          copyToClipboard(val, 'quick_calc', 'Resultado copiado al portapapeles');
+        }}
+      />
 
       {/* MODAL LEGAL */}
       {showLegalModal && (
