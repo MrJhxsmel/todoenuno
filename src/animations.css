@@ -1,0 +1,95 @@
+/* ========================================================
+   TODO EN UNO PERÚ - ANIMACIONES Y MICROINTERACCIONES
+   Optimizado con GPU (transform, opacity) sin reflow
+   ======================================================== */
+
+/* 1. Entrada suave de páginas y módulos */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.anim-fade-in-up {
+  animation: fadeInUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 2. Apertura fluida de modales (Vouchers y Legal) */
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.anim-modal-in {
+  animation: modalScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 3. Notificación flotante / Toast */
+@keyframes toastSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.anim-toast {
+  animation: toastSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 4. Efecto de elevación suave en tarjetas (Hover interactivo) */
+.card-hover-effect {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease,
+              box-shadow 0.2s ease;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-2px);
+}
+
+/* 5. Clic táctil en botones (Micro-rebote natural) */
+.btn-press-effect {
+  transition: transform 0.1s ease;
+}
+
+.btn-press-effect:active {
+  transform: scale(0.97);
+}
+
+/* 6. Efecto shimmer sutil para cuando consulta RUC o calcula */
+@keyframes shimmerPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.anim-loading-pulse {
+  animation: shimmerPulse 1.2s ease-in-out infinite;
+}
+
+/* 7. Respeto a usuarios con sensibilidad a animaciones */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
