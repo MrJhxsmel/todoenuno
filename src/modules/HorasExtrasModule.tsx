@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, Copy, Check, Printer } from 'lucide-react';
-import { formatearMoneda, numeroALetras } from '../src/utils/formatters';
+import { formatearMoneda, numeroALetras } from '../utils/formatters';
 
 interface Props {
   isDark: boolean;

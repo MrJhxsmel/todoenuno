@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DollarSign, Copy, Check } from 'lucide-react';
-import { formatearMoneda } from '../src/utils/formatters';
+import { formatearMoneda } from '../utils/formatters';
 
 interface Props {
   isDark: boolean;

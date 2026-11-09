@@ -39,12 +39,17 @@ import {
 } from 'lucide-react';
 
 // Módulos independientes
-import HorasExtrasModule from '../modules/HorasExtrasModule';
-import RegimenTributarioModule from '../modules/RegimenTributarioModule';
-import UtilidadesModule from '../modules/UtilidadesModule';
-import PreciosPosModule from '../modules/PreciosPosModule';
-import CartaRenunciaModule from '../modules/CartaRenunciaModule';
+import HorasExtrasModule from './modules/HorasExtrasModule';
+import RegimenTributarioModule from './modules/RegimenTributarioModule';
+import UtilidadesModule from './modules/UtilidadesModule';
+import PreciosPosModule from './modules/PreciosPosModule';
+import CartaRenunciaModule from './modules/CartaRenunciaModule';
 import { formatearMoneda, numeroALetras } from './utils/formatters';
+import RentaInmueblesModule from './modules/RentaInmueblesModule';
+import PlazoFijoModule from './modules/PlazoFijoModule';
+import RecargoConsumoModule from './modules/RecargoConsumoModule';
+import ReciboCajaModule from './modules/ReciboCajaModule';
+import ConversorUitModule from './modules/ConversorUitModule';
 
 // Algoritmo oficial SUNAT Módulo 11 para RUC
 function calcularDigitoVerificadorRuc(diezDigitos: string): number {
@@ -222,7 +227,12 @@ type ModuleType =
   | 'regimen'
   | 'utilidades'
   | 'precios_pos'
-  | 'renuncia';
+  | 'renuncia'
+  | 'renta_inmuebles'
+  | 'plazo_fijo'
+  | 'recargo_consumo'
+  | 'recibo_caja'
+  | 'uit';
 
 export default function App() {
   const getInitialModule = (): ModuleType => {
@@ -713,6 +723,11 @@ export default function App() {
     { id: 'laboral', title: 'Gratificación y Depósito de CTS', desc: 'Cálculo semestral legal de gratificación (+bono EsSalud) y depósito CTS', tag: 'Semestral', icon: Briefcase },
     { id: 'tim', title: 'Intereses Moratorios SUNAT (TIM)', desc: 'Actualización diaria de deudas tributarias vencidas (0.03% diario)', tag: 'Tributario', icon: Calendar },
     { id: 'ruc', title: 'Consulta y Validador Oficial de RUC', desc: 'Búsqueda de razón social, estado, condición, generador DNI y Módulo 11', tag: 'Verificación', icon: Building2 },
+    { id: 'renta_inmuebles', title: 'Renta 1ra y 2da Categoría (Inmuebles)', desc: 'Cálculo del 5% oficial para alquileres de predios o ganancia de capital en venta de casas', tag: 'Inmuebles', icon: Home },
+    { id: 'plazo_fijo', title: 'Simulador Plazo Fijo & TREA Cajas', desc: 'Calcula tu rendimiento anual neto en Cajas Municipales vs. Bancos tradicionales', tag: 'Finanzas', icon: Coins },
+    { id: 'recargo_consumo', title: 'Recargo al Consumo (Restaurantes 10%)', desc: 'Desglose del 10% legal de servicios para el personal más IGV en comandas y cuentas', tag: 'Gastronomía', icon: Receipt },
+    { id: 'recibo_caja', title: 'Generador de Recibo de Caja Simple', desc: 'Comprobante interno de ingresos/egresos en efectivo listo para imprimir y firmar', tag: 'Documentos', icon: FileText },
+    { id: 'uit', title: 'Conversor Oficial de UIT 2026', desc: 'Conversión rápida Soles/UIT (S/ 5,350) para topes del Estado, SAT y multas laborales', tag: 'Tributario', icon: Scale },
   ];
 
   const filteredModules = useMemo(() => {
@@ -1007,7 +1022,7 @@ export default function App() {
           </div>
         </div>
       </header>
-      
+
 {/* CONTENIDO PRINCIPAL AISLADO POR MÓDULO */}
       <main key={activeModule} className="flex-1 max-w-6xl w-full mx-auto px-4 py-8 anim-fade-in-up">
         {/* PANTALLA PRINCIPAL */}
@@ -1113,6 +1128,21 @@ export default function App() {
         )}
         {activeModule === 'renuncia' && (
           <CartaRenunciaModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} showToast={showToast} />
+        )}
+        {activeModule === 'renta_inmuebles' && (
+          <RentaInmueblesModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} abrirTicket={abrirTicket} showToast={showToast} />
+        )}
+        {activeModule === 'plazo_fijo' && (
+          <PlazoFijoModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} showToast={showToast} />
+        )}
+        {activeModule === 'recargo_consumo' && (
+          <RecargoConsumoModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} abrirTicket={abrirTicket} showToast={showToast} />
+        )}
+        {activeModule === 'recibo_caja' && (
+          <ReciboCajaModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} showToast={showToast} />
+        )}
+        {activeModule === 'uit' && (
+          <ConversorUitModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} showToast={showToast} />
         )}
 
         {/* CRONOGRAMA */}
