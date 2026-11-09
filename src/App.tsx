@@ -34,115 +34,17 @@ import {
   Download,
   ChevronDown,
   Eye,
+  Clock,
+  FileText,
 } from 'lucide-react';
 
-// --- CONVERSOR DE NÚMEROS A LETRAS OFICIAL SUNAT ---
-function Unidades(num: number): string {
-  switch (num) {
-    case 1: return 'UN';
-    case 2: return 'DOS';
-    case 3: return 'TRES';
-    case 4: return 'CUATRO';
-    case 5: return 'CINCO';
-    case 6: return 'SEIS';
-    case 7: return 'SIETE';
-    case 8: return 'OCHO';
-    case 9: return 'NUEVE';
-    default: return '';
-  }
-}
-
-function DecenasY(strSin: string, numUnidades: number): string {
-  return numUnidades > 0 ? strSin + ' Y ' + Unidades(numUnidades) : strSin;
-}
-
-function Decenas(num: number): string {
-  const decena = Math.floor(num / 10);
-  const unidad = num - decena * 10;
-  switch (decena) {
-    case 1:
-      switch (unidad) {
-        case 0: return 'DIEZ';
-        case 1: return 'ONCE';
-        case 2: return 'DOCE';
-        case 3: return 'TRECE';
-        case 4: return 'CATORCE';
-        case 5: return 'QUINCE';
-        default: return 'DIECI' + Unidades(unidad);
-      }
-    case 2:
-      return unidad === 0 ? 'VEINTE' : 'VEINTI' + Unidades(unidad);
-    case 3: return DecenasY('TREINTA', unidad);
-    case 4: return DecenasY('CUARENTA', unidad);
-    case 5: return DecenasY('CINCUENTA', unidad);
-    case 6: return DecenasY('SESENTA', unidad);
-    case 7: return DecenasY('SETENTA', unidad);
-    case 8: return DecenasY('OCHENTA', unidad);
-    case 9: return DecenasY('NOVENTA', unidad);
-    case 0: return Unidades(unidad);
-    default: return '';
-  }
-}
-
-function Centenas(num: number): string {
-  const centenas = Math.floor(num / 100);
-  const decenas = num - centenas * 100;
-  switch (centenas) {
-    case 1: return decenas > 0 ? 'CIENTO ' + Decenas(decenas) : 'CIEN';
-    case 2: return 'DOSCIENTOS ' + Decenas(decenas);
-    case 3: return 'TRESCIENTOS ' + Decenas(decenas);
-    case 4: return 'CUATROCIENTOS ' + Decenas(decenas);
-    case 5: return 'QUINIENTOS ' + Decenas(decenas);
-    case 6: return 'SEISCIENTOS ' + Decenas(decenas);
-    case 7: return 'SETECIENTOS ' + Decenas(decenas);
-    case 8: return 'OCHOCIENTOS ' + Decenas(decenas);
-    case 9: return 'NOVECIENTOS ' + Decenas(decenas);
-    default: return Decenas(decenas);
-  }
-}
-
-function Seccion(num: number, divisor: number, strSingular: string, strPlural: string): string {
-  const cientos = Math.floor(num / divisor);
-  if (cientos > 0) return cientos > 1 ? Centenas(cientos) + ' ' + strPlural : strSingular;
-  return '';
-}
-
-function Miles(num: number): string {
-  const divisor = 1000;
-  const cientos = Math.floor(num / divisor);
-  const resto = num - cientos * divisor;
-  const strMiles = Seccion(num, divisor, 'UN MIL', 'MIL');
-  const strCentenas = Centenas(resto);
-  if (strMiles === '') return strCentenas;
-  return (strMiles + ' ' + strCentenas).trim();
-}
-
-function Millones(num: number): string {
-  const divisor = 1000000;
-  const cientos = Math.floor(num / divisor);
-  const resto = num - cientos * divisor;
-  const strMillones = Seccion(num, divisor, 'UN MILLON', 'MILLONES');
-  const strMiles = Miles(resto);
-  if (strMillones === '') return strMiles;
-  return (strMillones + ' ' + strMiles).trim();
-}
-
-export function numeroALetras(monto: number): string {
-  if (isNaN(monto) || monto === 0) return 'SON: CERO CON 00/100 SOLES';
-  const valorPositivo = Math.abs(monto);
-  const enteros = Math.floor(valorPositivo);
-  const centavos = Math.round((valorPositivo - enteros) * 100);
-  const centavosStr = centavos < 10 ? `0${centavos}` : `${centavos}`;
-  const letras = Millones(enteros);
-  return `SON: ${letras.trim()} CON ${centavosStr}/100 SOLES`;
-}
-
-export function formatearMoneda(monto: number): string {
-  return new Intl.NumberFormat('es-PE', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(monto || 0);
-}
+// Módulos independientes
+import HorasExtrasModule from '../modules/HorasExtrasModule';
+import RegimenTributarioModule from '../modules/RegimenTributarioModule';
+import UtilidadesModule from '../modules/UtilidadesModule';
+import PreciosPosModule from '../modules/PreciosPosModule';
+import CartaRenunciaModule from '../modules/CartaRenunciaModule';
+import { formatearMoneda, numeroALetras } from './utils/formatters';
 
 // Algoritmo oficial SUNAT Módulo 11 para RUC
 function calcularDigitoVerificadorRuc(diezDigitos: string): number {
@@ -303,16 +205,53 @@ CRONOGRAMA_SUNAT['bc'] = CRONOGRAMA_SUNAT['0'].map((item) => ({
   vencimiento: `${parseInt(item.vencimiento.split(' ')[0], 10) + 7} ${item.vencimiento.split(' ')[1]}`,
 }));
 
+type ModuleType =
+  | 'home'
+  | 'sunat'
+  | 'cambio'
+  | 'laboral'
+  | 'liquidacion'
+  | 'sueldo'
+  | 'tim'
+  | 'ruc'
+  | 'alcabala'
+  | 'prestamo'
+  | 'cronograma'
+  | 'costo_empleador'
+  | 'horas_extras'
+  | 'regimen'
+  | 'utilidades'
+  | 'precios_pos'
+  | 'renuncia';
+
 export default function App() {
-  const getInitialModule = () => {
-    const hash = window.location.hash.replace('#', '');
-    if (['sunat', 'cambio', 'laboral', 'liquidacion', 'sueldo', 'tim', 'ruc', 'alcabala', 'prestamo', 'cronograma', 'costo_empleador'].includes(hash)) {
-      return hash as any;
+  const getInitialModule = (): ModuleType => {
+    const hash = window.location.hash.replace('#', '') as ModuleType;
+    const validos: ModuleType[] = [
+      'sunat',
+      'cambio',
+      'laboral',
+      'liquidacion',
+      'sueldo',
+      'tim',
+      'ruc',
+      'alcabala',
+      'prestamo',
+      'cronograma',
+      'costo_empleador',
+      'horas_extras',
+      'regimen',
+      'utilidades',
+      'precios_pos',
+      'renuncia',
+    ];
+    if (validos.includes(hash)) {
+      return hash;
     }
     return 'home';
   };
 
-  const [activeModule, setActiveModule] = useState<'home' | 'sunat' | 'cambio' | 'laboral' | 'liquidacion' | 'sueldo' | 'tim' | 'ruc' | 'alcabala' | 'prestamo' | 'cronograma' | 'costo_empleador'>(getInitialModule);
+  const [activeModule, setActiveModule] = useState<ModuleType>(getInitialModule);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('todoenuno_theme') as 'dark' | 'light') || 'dark';
   });
@@ -365,7 +304,7 @@ export default function App() {
     localStorage.removeItem('todoenuno_historial');
   };
 
-  const navigateTo = (mod: typeof activeModule) => {
+  const navigateTo = (mod: ModuleType) => {
     setActiveModule(mod);
     window.location.hash = mod === 'home' ? '' : mod;
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -409,7 +348,6 @@ export default function App() {
     setTimeout(() => setCopiedItem(null), 2000);
   };
 
-  // --- CONTROLADORES DE DESCARGA, IMPRESIÓN Y AIRDROP ---
   const descargarVoucherImagen = async (formato: 'png' | 'jpeg') => {
     if (!voucherRef.current) return;
     setShowDownloadMenu(false);
@@ -758,11 +696,16 @@ export default function App() {
     setShowTicketModal(true);
   };
 
-  const modulesList = [
+  const modulesList: { id: ModuleType; title: string; desc: string; tag: string; icon: any }[] = [
     { id: 'sunat', title: 'Calculadora SUNAT (IGV, SPOT)', desc: 'IGV 18%, Detracciones Banco de la Nación, Retención 3% y Recibos por Honorarios', tag: 'Tributario', icon: Receipt },
     { id: 'cambio', title: 'Dólar Hoy & Comparador de Bancos', desc: 'Tipo de cambio SUNAT oficial vs. Paralelo con spread de BCP, Interbank y BBVA', tag: 'Finanzas', icon: DollarSign },
     { id: 'cronograma', title: 'Cronograma de Vencimientos SUNAT', desc: 'Fechas límite mensuales según el último dígito del RUC con alerta a Google Calendar', tag: 'Tributario', icon: CalendarDays },
     { id: 'costo_empleador', title: 'Costo Laboral Empleador (Pymes)', desc: 'Sobrecosto real de contratación: Microempresa (REMYPE), Pequeña y General', tag: 'Planilla', icon: UserPlus },
+    { id: 'horas_extras', title: 'Horas Extras y Feriados (D.L. 854)', desc: 'Sobretasas oficiales del 25%, 35% y triple pago por laborar domingos y feriados', tag: 'Laboral', icon: Clock },
+    { id: 'regimen', title: 'Simulador de Régimen Tributario', desc: 'Diagnóstico inteligente: ¿Nuevo RUS, Especial (RER), MYPE o General?', tag: 'Tributario', icon: HelpCircle },
+    { id: 'utilidades', title: 'Reparto Legal de Utilidades (D.L. 892)', desc: 'Estimación del 50% por días laborados y 50% por sueldo anual', tag: 'Laboral', icon: Briefcase },
+    { id: 'precios_pos', title: 'Fijación de Precios & Comisiones POS', desc: 'Calcula tu precio de venta absorbiendo las comisiones de Niubiz, Izipay y Yape', tag: 'Comercio', icon: DollarSign },
+    { id: 'renuncia', title: 'Carta de Renuncia Laboral Formal', desc: 'Generador de carta formal con exoneración legal de 30 días de preaviso', tag: 'Documentos', icon: FileText },
     { id: 'alcabala', title: 'Impuesto de Alcabala Inmobiliario', desc: 'Deducción de 10 UIT inafectas y cálculo del 3% para compraventa de viviendas', tag: 'Inmuebles', icon: Home },
     { id: 'prestamo', title: 'Simulador de Préstamos (Cuota fija)', desc: 'Cronograma con sistema francés, cálculo de TEA mensual y total de intereses', tag: 'Bancario', icon: Coins },
     { id: 'liquidacion', title: 'Liquidación por Despido / Renuncia', desc: 'Cálculo de beneficios truncos (CTS, Gratificación, Vacaciones) e indemnización', tag: 'Laboral', icon: UserCheck },
@@ -821,7 +764,6 @@ export default function App() {
               <X className="w-4 h-4" />
             </button>
 
-            {/* ÁREA AISLADA DE IMPRESIÓN Y DESCARGA */}
             <div
               id="printable-voucher"
               ref={voucherRef}
@@ -856,10 +798,8 @@ export default function App() {
               </div>
             </div>
 
-            {/* BOTONERAS DE ACCIONES */}
             <div className="pt-4 space-y-2.5">
               <div className="grid grid-cols-2 gap-2 relative">
-                {/* Desplegable de Descarga */}
                 <div className="relative">
                   <button
                     onClick={() => {
@@ -891,7 +831,6 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Desplegable de Impresión */}
                 <div className="relative">
                   <button
                     onClick={() => {
@@ -931,7 +870,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Botón WhatsApp & AirDrop */}
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowWspPreview(!showWspPreview)}
@@ -951,7 +889,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Vista previa sin caracteres extraños */}
               {showWspPreview && (
                 <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 text-[10px] font-sans">
                   <div className="flex items-center justify-between text-emerald-800 font-bold border-b border-emerald-200 pb-1">
@@ -976,7 +913,6 @@ export default function App() {
       {/* HEADER ÚNICO FIJO */}
       <header className={`border-b ${borderHeader} backdrop-blur sticky top-0 z-40`}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          {/* ISOLOGO OFICIAL */}
           <div
             onClick={() => {
               navigateTo('home');
@@ -1011,7 +947,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* BUSCADOR */}
           <div className="flex-1 max-w-md relative hidden md:block">
             <Search className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-zinc-500' : 'text-slate-400'}`} />
             <input
@@ -1031,7 +966,6 @@ export default function App() {
             )}
           </div>
 
-          {/* ACCIONES Y TEMA */}
           <div className="flex items-center gap-2">
             {activeModule !== 'home' && (
               <>
@@ -1076,6 +1010,24 @@ export default function App() {
 
       {/* CONTENIDO PRINCIPAL */}
       <main key={activeModule} className="flex-1 max-w-6xl w-full mx-auto px-4 py-8 anim-fade-in-up">
+        {/* NUEVOS MÓDULOS MODULARIZADOS */}
+        {activeModule === 'horas_extras' && (
+          <HorasExtrasModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} abrirTicket={abrirTicket} showToast={showToast} />
+        )}
+        {activeModule === 'regimen' && (
+          <RegimenTributarioModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} />
+        )}
+        {activeModule === 'utilidades' && (
+          <UtilidadesModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} abrirTicket={abrirTicket} showToast={showToast} />
+        )}
+        {activeModule === 'precios_pos' && (
+          <PreciosPosModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} showToast={showToast} />
+        )}
+        {activeModule === 'renuncia' && (
+          <CartaRenunciaModule isDark={isDark} bgCard={bgCard} bgInput={bgInput} showToast={showToast} />
+        )}
+
+        {/* MÓDULOS EXISTENTES */}
         {activeModule === 'home' ? (
           <div className="space-y-8">
             <div className="max-w-xl mx-auto text-center pt-2 pb-1">
@@ -1103,7 +1055,7 @@ export default function App() {
                 return (
                   <div
                     key={item.id}
-                    onClick={() => navigateTo(item.id as any)}
+                    onClick={() => navigateTo(item.id)}
                     className={`group rounded-xl p-5 border transition-all cursor-pointer flex flex-col justify-between ${bgCard} hover:border-zinc-500 card-hover-effect glass-card`}
                   >
                     <div>
@@ -1135,7 +1087,6 @@ export default function App() {
               })}
             </div>
 
-            {/* HISTORIAL LOCAL */}
             {historyItems.length > 0 && (
               <div className={`rounded-xl p-4 border ${bgCard} mt-8 glass-card`}>
                 <div className="flex items-center justify-between border-b pb-2 mb-3 border-zinc-800">
@@ -1162,7 +1113,6 @@ export default function App() {
             )}
           </div>
         ) : activeModule === 'cronograma' ? (
-          /* ================= MÓDULO: CRONOGRAMA SUNAT ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1212,7 +1162,6 @@ export default function App() {
             </div>
           </div>
         ) : activeModule === 'costo_empleador' ? (
-          /* ================= MÓDULO: COSTO LABORAL EMPLEADOR ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1336,7 +1285,6 @@ export default function App() {
             </div>
           </div>
         ) : activeModule === 'sunat' ? (
-          /* ================= MÓDULO: CALCULADORA SUNAT ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1569,7 +1517,7 @@ export default function App() {
                       />
                     </div>
                   </div>
-                  <label className={`flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer text-xs ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-50 border-slate-300'}`}>
+                  <label className={`flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer text-xs ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-slate-50 border-slate-300'}`}>
                     <input
                       type="checkbox"
                       checked={tieneSuspension}
@@ -1604,7 +1552,6 @@ export default function App() {
             )}
           </div>
         ) : activeModule === 'cambio' ? (
-          /* ================= MÓDULO: TIPO DE CAMBIO ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1769,7 +1716,6 @@ export default function App() {
             </div>
           </div>
         ) : activeModule === 'alcabala' ? (
-          /* ================= MÓDULO: ALCABALA ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1831,7 +1777,6 @@ export default function App() {
             </div>
           </div>
         ) : activeModule === 'prestamo' ? (
-          /* ================= MÓDULO: PRÉSTAMO FRANCÉS ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1909,7 +1854,6 @@ export default function App() {
             </div>
           </div>
         ) : activeModule === 'liquidacion' ? (
-          /* ================= MÓDULO: LIQUIDACIÓN ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -1980,7 +1924,6 @@ export default function App() {
             </div>
           </div>
         ) : activeModule === 'sueldo' ? (
-          /* ================= MÓDULO: SUELDO NETO ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -2025,7 +1968,6 @@ export default function App() {
             </div>
           </div>
         ) : activeModule === 'laboral' ? (
-          /* ================= MÓDULO: CTS & GRATI ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -2073,7 +2015,6 @@ export default function App() {
             </div>
           </div>
         ) : activeModule === 'tim' ? (
-          /* ================= MÓDULO: TIM INTERESES ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -2117,7 +2058,6 @@ export default function App() {
             </div>
           </div>
         ) : (
-          /* ================= MÓDULO: VALIDADOR Y CONSULTA RUC COMPLETO ================= */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
               <div>
@@ -2191,7 +2131,6 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* BOTONES TOP 10 RUCS MÁS CONSULTADOS */}
                 <div className="pt-2">
                   <p className="text-[11px] text-zinc-500 mb-2 font-medium">Empresas más consultadas (Top 10):</p>
                   <div className="flex flex-wrap gap-1.5">
@@ -2226,7 +2165,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* FICHA RUC */}
               <div className={`lg:col-span-7 border rounded-xl p-5 flex flex-col justify-between space-y-4 ${bgCard} glass-card`}>
                 <div className="space-y-3">
                   <span className="text-xs font-medium block border-b pb-2 border-zinc-800">Ficha del Contribuyente</span>
@@ -2309,7 +2247,6 @@ export default function App() {
           🔒 <strong>Privacidad Garantizada:</strong> Todos los cálculos se procesan de forma 100% local en tu navegador. Tus montos, sueldos y facturas nunca se envían ni almacenan en servidores externos.
         </p>
         
-        {/* Enlaces Legales */}
         <div className="flex justify-center items-center gap-4 text-[11px] pt-1">
           <button
             onClick={() => { setLegalTab('terminos'); setShowLegalModal(true); }}
